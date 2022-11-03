@@ -1,0 +1,24 @@
+PDS_VERSION_ID          = PDS3
+RECORD_TYPE             = STREAM
+
+OBJECT                  = TEXT
+ PUBLICATION_DATE         = 2018-08-29
+ NOTE                     = "Description of contents in the CATALOG
+                             subdirectory"
+END_OBJECT              = TEXT
+END
+
+                           CATALOG Directory Contents
+
+The CATALOG directory contains catalog files with keyword - value pairs
+describing the dataset, LROC instrument, spacecraft, mission, associated
+persons, and literature citation references. 
+The following files are found in this subdirectory:
+
+CATINFO.TXT     - The file you are reading.
+DATASET.CAT     - Describes the datasets
+INST.CAT        - Describes the LROC instrument
+INSTHOST.CAT    - Describes the spacecraft hosting the instrument
+MISSION.CAT     - Describes the LRO project mission
+PERSON.CAT      - Names the key individuals associated with LROC
+REF.CAT         - References articles and scientific literature cited

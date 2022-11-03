@@ -1,0 +1,44 @@
+PDS_VERSION_ID                     = PDS3
+LABEL_REVISION_NOTE                = "
+    2007-03-01 GEO:slavney Original;
+    2008-04-23 GEO:slavney Revised CHINETAL reference.
+    2008-05-28; bsword, reformatted;
+    2008-06-17 - tdonnelly, merged w/ LRO REF.CAT
+    2008-12-12 - tdonnelly, added citations
+    2010-03-12 - ebc, final edit of citations"
+RECORD_TYPE                        = STREAM
+
+OBJECT                            = REFERENCE
+    REFERENCE_KEY_ID              = "CHINETAL2007"
+    REFERENCE_DESC                = "Chin, G., et al., Lunar Reconnaissance
+    Orbiter Overview:  The Instrument Suite and Mission, Space Sci. Rev.
+    129:391-419, 2007."
+END_OBJECT                        = REFERENCE
+
+OBJECT                            = REFERENCE
+    REFERENCE_KEY_ID              = "ROBINSONETAL2010"
+    REFERENCE_DESC                = "Lunar Reconnaissance Orbiter Camera
+    (LROC) Instrument Overview M. S. Robinson, S. M. Brylow, M. Tschimmel,
+    D. Humm, S. J. Lawrence, P. C.  Thomas, B. W. Denevi, E. Bowman-Cisneros,
+    J. Zerr, M. A. Ravine, M. A.  Caplinger, F. T. Ghaemi, J. A. Schaffner,
+    M. C. Malin, P. Mahanti, A.  Bartels, J. Anderson, T. N. Tran, E. M.
+    Eliason, A. S. McEwen, E. Turtle, B. L. Jolliff and H. Hiesinger - Space
+    Science Reviews, online version published March 11 2010
+    DOI: 10.1007/s11214-010-9634-2"
+END_OBJECT                        = REFERENCE
+
+OBJECT                            = REFERENCE
+    REFERENCE_KEY_ID              = "SAYLOR2006A"
+    REFERENCE_DESC                = "Saylor, R., Lunar Reconnaissance Orbiter
+    Project Mission Concept of Operations, LRO Project Document
+    431-OPS-000042, 2006."
+END_OBJECT                        = REFERENCE
+
+OBJECT                            = REFERENCE
+    REFERENCE_KEY_ID              = "SAYLOR2006B"
+    REFERENCE_DESC                = "Saylor, R., Lunar Reconnaissance Orbiter
+    Project Mission Design Handbook, LRO Project Document 431-HDBK-000486,
+    2006."
+END_OBJECT                        = REFERENCE
+
+END
