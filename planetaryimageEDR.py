@@ -184,11 +184,12 @@ if __name__ == "__main__":
     
     ## test reading
     
-    
+    img_path = "../lroc/data/edr/M107725040LC" # do not have the .IMG extension at the end
+    save_name = "M107725040LC"
     I = PDS3Image
     print(I.SAMPLE_TYPES)
     
-    I = PDS3Image.open("../lroc/data/edr/M107725040LC")
+    I = PDS3Image.open(img_path)
     print(I.data.dtype)
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
@@ -206,7 +207,7 @@ if __name__ == "__main__":
     I = PDS3ImageEDR
     print(I.SAMPLE_TYPES)
     
-    I = PDS3ImageEDR.open("../lroc/data/edr/M107725040LC")
+    I = PDS3ImageEDR.open(img_path)
     print(I.data.dtype)
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
@@ -226,15 +227,15 @@ if __name__ == "__main__":
     
     
     # straight save
-    I = PDS3ImageEDR.open("../lroc/data/edr/M107725040LC")
+    I = PDS3ImageEDR.open(img_path)
 
     plt.figure(figsize=(20,3))
     plt.imshow(I.image, cmap="gray", vmin=20, vmax=60)
     plt.colorbar()
     
     #I.data = I.data.astype(np.float64)
-    I.save("M107725040LC")
-    I = PDS3ImageEDR.open("M107725040LC")
+    I.save(save_name)
+    I = PDS3ImageEDR.open(save_name)
     
     print(I.label)
     print(I.data.dtype)
@@ -245,7 +246,7 @@ if __name__ == "__main__":
     plt.colorbar()
     
     # update and save
-    I = PDS3ImageEDR.open("../lroc/data/edr/M107725040LC")
+    I = PDS3ImageEDR.open(img_path)
     a1 = I.image.copy()
     
     plt.figure(figsize=(20,3))
