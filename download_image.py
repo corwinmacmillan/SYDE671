@@ -7,31 +7,39 @@ Created on Sun Nov 13 14:47:35 2022
 """
 
 import requests
-import pandas as pd
 import numpy as np
+import pandas as pd
+import os
 
 
-def download_image(product_id, filepath):
+def download_image(file_spec, filepath):
     # product_id = 'M1103765284LE'
-    
-    try:
-        img_url = 'https://pds.lroc.asu.edu/data/LRO-L-LROC-2-EDR-V1.0/LROLRC_0013/DATA/ESM/2012275/NAC/' + product_id +'.IMG'  
-    except:
-        print("Image link does not exist")
-    
+
+    img_url = 'https://pds.lroc.asu.edu/data/' + file_spec
+    # try:
     r = requests.get(img_url)
-    
-    with open(filepath + product_id + '.img','wb') as f:
-       f.write(r.content)
+    # except:
+    #     raise RuntimeError('Link {} does not exist'.format(img_url))
+
+    with open(filepath + file_spec[-16:], 'wb') as f:
+        try:
+            f.write(r.content)
+        except:
+            raise RuntimeError('Directory is full. Stopped downloading at csv {}, product ID {}'.format(filepath,
+                                                                                                        file_spec[-16:]))
 
 
-def download_image_list(img_csv):
+def download_image_list(img_csv, download_path):
     img_list = pd.read_csv(img_csv)
-    product_ids = img_list[['PRODUCT_ID']].to_numpy()
-    for pid in product_ids:
-        download_image(pid)
-        
+    file_specs = img_list[['FILE_SPECIFICATION_NAME']].to_numpy()
+    for file_spec in file_specs:
+        download_image(file_spec, download_path)
 
+
+if __name__ == '__main__':
+    csv_dir = 'edr/'
+    for file in os.listdir(csv_dir):
+        download_image_list(csv_dir + file, '/media/panlab/EXTERNALHDD')
        
 
 
