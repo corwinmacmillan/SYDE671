@@ -52,9 +52,9 @@ class PDS3ImageEDR(PDS3Image):
         # md5 check
         assert hashlib.md5(self.data.tobytes()).hexdigest() == self.label["IMAGE"]["MD5_CHECKSUM"]
         
-        # product type check
-        assert self.label["PRODUCT_TYPE"] == "EDR"
-        assert self.label["PRODUCT_ID"].endswith("E")
+        # # product type check
+        # assert self.label["PRODUCT_TYPE"] == "EDR"
+        # assert self.label["PRODUCT_ID"].endswith("E")
         
         # get image
         image = self.data.squeeze()
@@ -67,7 +67,7 @@ class PDS3ImageEDR(PDS3Image):
         assert self.label["LRO:BTERM"] == decompand._bterms[table]# check terms are as expected
         assert self.label["LRO:XTERM"] == decompand._xterms[table]
         assert self.label["LRO:MTERM"] == decompand._mterms[table]
-        self._image = decompand.decompand(image, table)# decompanded image
+        self._image = decompand.decompand(image.astype('uint8'), table)# decompanded image
         
         # get image identifier (using our naming scheme)
         self.PRODUCT_ID = self.label["PRODUCT_ID"].replace("E","C")
@@ -174,7 +174,7 @@ class PDSLabelEncoderEDR(pvl.encoder.PDSLabelEncoder):
     
     
     
-    
+path = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\Dark Summed\M107758599LC.IMG'   
     
     
 if __name__ == "__main__":
@@ -184,12 +184,12 @@ if __name__ == "__main__":
     
     ## test reading
     
-    img_path = "../lroc/data/edr/M107725040LC" # do not have the .IMG extension at the end
-    save_name = "M107725040LC"
+    
     I = PDS3Image
     print(I.SAMPLE_TYPES)
     
-    I = PDS3Image.open(img_path)
+    I = PDS3Image.open(path)
+    I.data = I.data.astype('uint8')
     print(I.data.dtype)
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
@@ -207,7 +207,8 @@ if __name__ == "__main__":
     I = PDS3ImageEDR
     print(I.SAMPLE_TYPES)
     
-    I = PDS3ImageEDR.open(img_path)
+    I = PDS3ImageEDR.open(path)
+    # I.data = I.data.astype('uint8')
     print(I.data.dtype)
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
@@ -227,15 +228,15 @@ if __name__ == "__main__":
     
     
     # straight save
-    I = PDS3ImageEDR.open(img_path)
+    I = PDS3ImageEDR.open(path)
 
     plt.figure(figsize=(20,3))
     plt.imshow(I.image, cmap="gray", vmin=20, vmax=60)
     plt.colorbar()
     
     #I.data = I.data.astype(np.float64)
-    I.save(save_name)
-    I = PDS3ImageEDR.open(save_name)
+    I.save("M107724658LC.IMG")
+    I = PDS3ImageEDR.open(path)
     
     print(I.label)
     print(I.data.dtype)
@@ -246,7 +247,7 @@ if __name__ == "__main__":
     plt.colorbar()
     
     # update and save
-    I = PDS3ImageEDR.open(img_path)
+    I = PDS3ImageEDR.open(path)
     a1 = I.image.copy()
     
     plt.figure(figsize=(20,3))
