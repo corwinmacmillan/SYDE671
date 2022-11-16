@@ -174,7 +174,7 @@ class PDSLabelEncoderEDR(pvl.encoder.PDSLabelEncoder):
     
     
     
-path = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\Dark Summed\M107758599LC.IMG'   
+path = 'data\M107758599LC.IMG'
     
     
 if __name__ == "__main__":
