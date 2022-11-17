@@ -23,28 +23,30 @@ import numpy as np
 # DEFINE COMPANDING TABLES (see LROCSIS.PDF)
 
 _bterms = \
-{0: [0, 8, 25, 59, 128],
- 1: [0, 0, 0, 0, 0],
- 2: [0, 0, 0, 0, 0],
- 3: [0, 16, 69, 103, 128],
- 4: [0, 0, 0, 65, 128],
- 5: [0, 0, 14, 65, 128]}
+{0: [0, 8, 25, 59, 128, 0],
+ 1: [0, 0, 0, 0, 0, 0],
+ 2: [0, 0, 0, 0, 0, 0],
+ 3: [0, 16, 69, 103, 128, 0],
+ 4: [0, 0, 0, 65, 128, 0],
+ 5: [0, 0, 14, 65, 128, 0]}
 
-_xterms = \
-{0: [0, 32, 136, 543, 2207],
- 1: [511, 0, 0, 0, 0],
- 2: [0, 0, 0, 0, 4095],
- 3: [0, 64, 424, 536, 800],
- 4: [0, 0, 0, 1040, 2000],
- 5: [0, 0, 112, 816, 2000]}
+# x-terms correspond to the 12-bit DN range (see appendix B)
+_xterms = {
+    0: [0, 32, 136, 543, 2207, 4095],
+    1: [511, 0, 0, 0, 0, 4095],
+    2: [0, 0, 0, 0, 4095, 4095],
+    3: [0, 64, 424, 536, 800, 4095],
+    4: [0, 0, 0, 1040, 2000, 4095],
+    5: [0, 0, 112, 816, 2000, 4095]
+ }
 
 _mterms = \
-{0: [0.5, 0.25, 0.125, 0.0625, 0.03125],
- 1: [0.5, 0.25, 0.125, 0.0625, 0.03125],
- 2: [0.5, 0.25, 0.125, 0.0625, 0.03125],
- 3: [0.5, 0.25, 0.125, 0.0625, 0.03125],
- 4: [0.5, 0.25, 0.125, 0.0625, 0.03125],
- 5: [0.5, 0.25, 0.125, 0.0625, 0.03125]}
+{0: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0],
+ 1: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0],
+ 2: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0],
+ 3: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0],
+ 4: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0],
+ 5: [0.5, 0.25, 0.125, 0.0625, 0.03125, 0]}
 
 _MAX_INPUT_VALUE = 4095
 
@@ -105,12 +107,12 @@ def _get_compand_maps():
     This is a python implementation of the psuedocode in LROCSIS.PDF.
     """
     
-    base = np.arange(4096, dtype=np.uint16)
+    base = np.arange(65536, dtype=np.uint16)
     compand_maps = {}
     
     for table in range(6):
         
-        compand_maps[table] = np.zeros(4096, dtype=np.uint8)
+        compand_maps[table] = np.zeros(65536, dtype=np.uint8)
     
         # get companding table
         xterm = _xterms[table]# the y-intercept of the linear function
@@ -128,8 +130,10 @@ def _get_compand_maps():
                 pout = p/8+bterm[2]
             elif p < xterm[4]: 
                 pout = p/16+bterm[3]
-            else:
+            elif p < xterm[5]:
                 pout = p/32+bterm[4]
+            else:
+                pout = 0
             
             # Output the middle bin value
             compand_maps[table][i] = pout# note casts as integer value if array is uint
@@ -172,31 +176,48 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     
     
-    # plot companding / decompanding maps
-    plt.figure(figsize=(10,10))
+    # # plot companding / decompanding maps
+    # plt.figure(figsize=(10,10))
     
-    base = np.arange(4096, dtype=np.uint16)
-    for table in range(6):
-        plt.plot(base, compand_maps[table], lw=3, label=table)
+    # base = np.arange(65536, dtype=np.uint16)
+    # for table in range(6):
+    #     plt.plot(base, compand_maps[table], lw=3, label=table)
     
-    base = np.arange(256, dtype=np.uint8)
-    for table in range(6):
-        plt.plot(decompand_maps[table], base, color="k", label=table)
+    # base = np.arange(256, dtype=np.uint8)
+    # for table in range(6):
+    #     plt.plot(decompand_maps[table], base, color="k", label=table)
     
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    # plt.show()
     
     
     # test using realistic image size (250 MB)
-    t = 3
+    t = 3 # Companding scheme 3 (in paper)
     
-    np.random.seed(123)
-    image = np.random.randint(0, 4096, size=(52224, 5064), dtype=np.uint16)
-        
+    '''
+    Import LROC image (16 bit)
+    '''
+    # np.random.seed(123)
+    # image = np.random.randint(0, 65536, size=(52224, 5064), dtype=np.uint16)
+    from planetaryimage import PDS3Image
+    I = PDS3Image.open('SYDE671\Dark Normal\M107724658LC.IMG')
+    image = I.image.astype(np.uint16)
+    
+    fig1 = plt.figure()
+    plt.imshow(image, cmap='gray')
+    
+    
+
+    '''
+    Compand to 8 bit
+    '''    
     start = time.time()
     image2 = compand(image, t)
     print("%.2f s"%(time.time()-start))
     
+    '''
+    Decompand back to 16 bit
+    '''
     start = time.time()
     image3 = decompand(image2, t)
     print("%.2f s"%(time.time()-start))
@@ -207,8 +228,12 @@ if __name__ == "__main__":
     plt.figure()
     plt.scatter(image3.flatten()[:1000], image2.flatten()[:1000], s=2)
     
+    '''
+    OUTPUTS COMPANDING NOISE FIGURE
+    '''
+    noise = image3.flatten().astype(float)-image.flatten().astype(float)
     plt.figure()
-    plt.scatter(np.arange(1000), image3.flatten()[:1000].astype(float)-image.flatten()[:1000].astype(float), s=1)
+    plt.scatter(np.arange(image3.size), image3.flatten().astype(float)-image.flatten().astype(float), s=1)
     
     plt.show()
 
