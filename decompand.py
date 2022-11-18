@@ -174,7 +174,9 @@ if __name__ == "__main__":
     
     import time
     import matplotlib.pyplot as plt
-    
+    from matplotlib import use
+    use('TKAgg')
+    plt.close('all')
     
     # # plot companding / decompanding maps
     # plt.figure(figsize=(10,10))
@@ -200,11 +202,13 @@ if __name__ == "__main__":
     # np.random.seed(123)
     # image = np.random.randint(0, 65536, size=(52224, 5064), dtype=np.uint16)
     from planetaryimage import PDS3Image
-    I = PDS3Image.open('SYDE671\Dark Normal\M107724658LC.IMG')
+    I = PDS3Image.open('/media/panlab/EXTERNALHDD/dark_summed/1095568715LC.IMG')
     image = I.image.astype(np.uint16)
-    
+    print(image.shape)
     fig1 = plt.figure()
+    plt.axis('off')
     plt.imshow(image, cmap='gray')
+
     
     
 
@@ -231,10 +235,10 @@ if __name__ == "__main__":
     '''
     OUTPUTS COMPANDING NOISE FIGURE
     '''
-    noise = image3.flatten().astype(float)-image.flatten().astype(float)
-    plt.figure()
-    plt.scatter(np.arange(image3.size), image3.flatten().astype(float)-image.flatten().astype(float), s=1)
-    
+    # noise = image3.flatten().astype(float)-image.flatten().astype(float)
+    # plt.figure()
+    # plt.scatter(np.arange(image3.size), image3.flatten().astype(float)-image.flatten().astype(float), s=1)
+    #
     plt.show()
 
     
