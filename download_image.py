@@ -30,18 +30,20 @@ def download_image(file_spec, filepath):
                                                                                                         img_name))
 
 
-def download_image_list(img_csv, download_path):
+def download_image_list(img_csv, download_path, continuation_index=0):
     img_list = pd.read_csv(img_csv)
     file_specs = img_list[['FILE_SPECIFICATION_NAME']].to_numpy()
-    for file_spec in file_specs:
+    list_size = file_specs.size
+    for i, file_spec in enumerate(file_specs[continuation_index:]):
         download_image(file_spec[0], download_path)
+        print('File {}, {} / {}'.format(img_csv + file_spec[0], i + continuation_index, list_size))
 
 
 if __name__ == '__main__':
     csv_dir = 'edr/'
     download_dir = '/media/panlab/EXTERNALHDD/'
-    for file in os.listdir(csv_dir):
-        download_image_list(csv_dir + file, download_dir + file[:-4] + '/')
+    for csv_file in [os.listdir(csv_dir)[1]]:
+        download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/', 5234)
        
 
 
