@@ -63,6 +63,22 @@ def companding_noise(image):
     return img
 
 
+def generate_destripe_pairs(dark_calibration_folder, destination_folder):
+    '''
+
+    :param dark_calibration_folder:
+    :param destination_folder:
+    :return:
+    '''
+    param_destination = destination_folder + 'parameters'
+    calib_destination = destination_folder + 'calibration_frames'
+    dark_files = os.listdir(dark_calibration_folder)
+
+
+def generate_crop_list(clean_img_dir):
+    clean_files = os.listdir(clean_img_dir)
+
+
 def generate_noisy_img_pairs(clean_img_dir, destination_dir):
     '''
     Generate clean-noisy image pairs. Let's make this parallelized
@@ -73,3 +89,4 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir):
     noisy_destination = destination_dir + 'noisy'
     clean_destination = destination_dir + 'clean'
     clean_files = os.listdir(clean_img_dir)
+
