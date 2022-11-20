@@ -38,18 +38,16 @@ def photon_noise(image):
     return img
 
 
-def dark_noise(image, calibration_frame_dir):
+def dark_noise(calibration_frame_dir):
     '''
-    Add dark noise by randomly sampling dark calibration frames and adding it to image
-    :param image:
+    Return random window of dark calibration frame, chosen from director of cropped calibration frames
     :param calibration_frame_dir:
-    :return:
+    :return: random calibration frame window
     '''
     files = os.listdir(calibration_frame_dir)
     rand_i = np.random.randint(0, len(files))
     rand_img = cv.imread(files[rand_i])
-    img = image + rand_img
-    return img
+    return rand_img
 
 
 def companding_noise(image):
@@ -79,9 +77,23 @@ def generate_crop_list(clean_img_dir):
     clean_files = os.listdir(clean_img_dir)
 
 
-def generate_noisy_img_pairs(clean_img_dir, destination_dir):
+def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
     '''
     Generate clean-noisy image pairs. Let's make this parallelized
+    Workflow:
+        noisy_dir = destination_dir + 'noisy'
+        clean_destination = destination_dir + 'clean'
+        clean_files = os.listdir(clean_img_dir)
+        parfor image_index, crops in crop_list: #parfor is parallelized for loop
+            image = cv.imread(clean_files[image_index])
+            noise = Sequential(non_linearity, flatfield, photon_noise)
+            noisy_image = noise(image)
+            clean_crops = [image[crop:crop+window_size] for crop in crops]
+            noisy_crops = [noisy_image """"""]
+            noisy_crops = [dark_noise + compand_noise(crop) for crop in crop_images]
+            save(noisy_crops, noisy_dir) #  make sure corresponding
+            save(clean_crops, clean_dir) #  crops have corresponding names!!
+
     :param clean_img_dir:
     :param noisy_img_dir:
     :return:
