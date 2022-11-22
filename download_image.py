@@ -15,7 +15,9 @@ from pathlib import Path
 
 def download_image(file_spec, filepath):
     img_name = file_spec[-16:]
-
+    img_name = img_name.replace('3-CDR', '2-EDR')
+    img_name = img_name.replace('C.IMG', 'E.IMG')
+    img_name = img_name.replace('LRC_1', 'LRC_0')
     img_url = 'https://pds.lroc.asu.edu/data/' + file_spec
     # try:
     r = requests.get(img_url)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     csv_dir = 'edr/'
     download_dir = '/media/panlab/EXTERNALHDD/'
     for csv_file in [os.listdir(csv_dir)[1]]:
-        download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/', 5234)
+        download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/')
        
 
 
