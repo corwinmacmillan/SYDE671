@@ -5,7 +5,7 @@ import numpy as np
 import os
 import cv2 as cv
 import decompand
-from planetaryimage import PDS3Image
+from planetaryImageEDR import PDS3ImageEDR
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
@@ -51,7 +51,7 @@ def dark_noise(calibration_frame_dir, patch_size=(256,256)):
     from sklearn.feature_extraction.image import extract_patches_2d
     files = os.listdir(calibration_frame_dir)
     rand_i = np.random.randint(0, len(files))
-    rand_img = PDS3Image.open(files[rand_i])
+    rand_img = PDS3ImageEDR.open(files[rand_i])
     rand_patch = extract_patches_2d(rand_img, patch_size)
     return rand_patch
 
@@ -81,7 +81,7 @@ def generate_destripe_params(dark_calibration_folder, destination_folder, summed
     parameters = []
 
     for i in range(len(dark_files)):
-        I = PDS3Image.open(os.path.join(dark_calibration_folder, dark_files[i]))
+        I = PDS3ImageEDR.open(os.path.join(dark_calibration_folder, dark_files[i]))
         labels = I.label
 
         if summed:
