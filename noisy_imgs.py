@@ -81,8 +81,8 @@ def generate_crop_list(clean_img_dir):
     img_len = 2532
     crop_list = []
     
-    @parfor(range(100,000), (0,))
-    def generate(i,a):        # num of crops to be generated
+    for i in range(100,000):
+        # num of crops to be generated
         img_idx = random.randint(1,len(clean_files))
         crop = random.randint(0,img_len - 256)
         crop_list.append([img_idx, crop])
@@ -91,7 +91,7 @@ def generate_crop_list(clean_img_dir):
 
 
 
-def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
+def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfield_img_path, calibration_frame_dir):
     '''
     Generate clean-noisy image pairs. Let's make this parallelized
     Workflow:
@@ -121,22 +121,31 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
     clean_files = os.listdir(clean_img_dir)
     
     window_size = 256
+
     
     for image_index, crops in crop_list:
+        
         # get image
         image = cv.imread(clean_files[image_index])
-        # get each noise component
-        N = non_linearity(image)
-        F = flatfield(image) # do i need to the flafield directory here?
-        S_N_p = photon_noise(image)
-        D = dark_noise() # do i need the directory here?
-        N_c = companding_noise(image)
         
-        noisy_img = np.matmul(N, np.matmul(F, S_N_p))
-        
+        # get crops
         clean_crops = [image[crop:crop+window_size] for crop in crops]
-        noisy_crops = [noisy_img[crop:crop+window_size] + D + N_c[crop:crop+window_size] for crop in crops]
+        noisy_crops = []
         
+        for patch in clean_crops:
+            # get each noise component
+            N = non_linearity(patch)
+            F = flatfield(patch, flatfield_img_path)
+            S_N_p = photon_noise(patch)
+            D = dark_noise(calibration_frame_dir) # do i need the directory here?
+            N_c = companding_noise(patch)
+        
+            # generate noisy patch
+            noisy_patch = np.matmul(N, np.matmul(F, S_N_p)) + D + N_c
+            
+            noisy_crops.append(noisy_patch)
+        
+            
         os.save(noisy_crops, noisy_destination)
         os.save(clean_crops, clean_destination)
 
