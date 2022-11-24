@@ -37,11 +37,8 @@ def photon_noise(image):
     :param image: numpy array of dimensions (MxN)
     :return:
     '''
-    scaler = MinMaxScaler(-1, 1)
-    img_norm = scaler.fit_transform(image)
-    mean = np.mean(img_norm)
-    Np = np.random.poisson(mean, size=img_norm.shape)
-    Np = scaler.inverse_transform(Np)
+    mean = np.mean(image)
+    Np = np.random.poisson(mean, size=image.shape)
     return Np
 
 
