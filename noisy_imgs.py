@@ -5,6 +5,8 @@ import numpy as np
 import os
 import cv2 as cv
 import decompand
+import random
+import parfor
 
 
 def non_linearity(image):
@@ -75,6 +77,18 @@ def generate_destripe_pairs(dark_calibration_folder, destination_folder):
 
 def generate_crop_list(clean_img_dir):
     clean_files = os.listdir(clean_img_dir)
+    
+    img_len = 2532
+    crop_list = []
+    
+    @parfor(range(100,000), (0,))
+    def generate(i,a):        # num of crops to be generated
+        img_idx = random.randint(1,len(clean_files))
+        crop = random.randint(0,img_len - 256)
+        crop_list.append([img_idx, crop])
+    
+        return(crop_list)
+
 
 
 def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
@@ -98,7 +112,31 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
     :param noisy_img_dir:
     :return:
     '''
+    
+    # set destination directories
     noisy_destination = destination_dir + 'noisy'
     clean_destination = destination_dir + 'clean'
+    
+    # get clean_files
     clean_files = os.listdir(clean_img_dir)
+    
+    window_size = 256
+    
+    for image_index, crops in crop_list:
+        # get image
+        image = cv.imread(clean_files[image_index])
+        # get each noise component
+        N = non_linearity(image)
+        F = flatfield(image) # do i need to the flafield directory here?
+        S_N_p = photon_noise(image)
+        D = dark_noise() # do i need the directory here?
+        N_c = companding_noise(image)
+        
+        noisy_img = np.matmul(N, np.matmul(F, S_N_p))
+        
+        clean_crops = [image[crop:crop+window_size] for crop in crops]
+        noisy_crops = [noisy_img[crop:crop+window_size] + D + N_c[crop:crop+window_size] for crop in crops]
+        
+        os.save(noisy_crops, noisy_destination)
+        os.save(clean_crops, clean_destination)
 
