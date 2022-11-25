@@ -7,7 +7,7 @@ import cv2 as cv
 import random
 from parfor import parfor
 import decompand
-from planetaryImageEDR import PDS3ImageEDR
+from planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
@@ -19,6 +19,17 @@ def non_linearity(image):
     :return: img of same dimensions with non-linear response noise
     '''
     img = np.zeros(image.shape)
+    return img
+
+
+def rescale_DN(image):
+    '''
+    Rescale images to be between 0-60 DN
+    :param image:
+    :return:
+    '''
+    multiply_factor = np.random.randint(1, 61)
+    img = image/np.median(image) * multiply_factor
     return img
 
 
@@ -114,27 +125,37 @@ def generate_destripe_params(dark_calibration_folder, destination_folder, summed
         df.to_csv(os.path.join(param_destination, 'dark_summed_parameters.csv'), index=False)
 
 
-def generate_crop_list(input_img_dir, num_crops, img_dims=(52224, 2532), destination_txt_file='crop_list.txt', crop_size=256):
+def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dims=(52224, 2532), destination_txt_file='crop_list.txt', crop_size=256):
     input_files = os.listdir(input_img_dir)
     
     img_l = img_dims[0]
     img_h = img_dims[1]
-    # crop_list = []
+    crop_list = []
+    i = 0
+
+    while i < total_num_crops:
+        img_idx = np.random.randint(0, len(input_files))
+        img_num_crops = np.random.randint(1, max_img_crops)
+        crop_l = np.random.randint(0, img_l - crop_size, img_num_crops)
+        crop_h = np.random.randint(0, img_h - crop_size, img_num_crops)
+        crop_list.append([img_idx, crop_h, crop_l])
+        i += img_num_crops
+
+    # @parfor(range(num_crops))
+    # def generate_crops(i):
+    #     # num of crops to be generated
+    #     img_idx = random.randint(1,len(input_files))
+    #     crop_l = random.randint(0,img_l - crop_size)
+    #     crop_h = random.randint(0,img_h - crop_size)
+    #     # crop_list.append([img_idx, [crop_h,crop_l]])
+    #     crop = [img_idx, [crop_h, crop_l]]
+    #
+    #     return crop
     
-    @parfor(range(num_crops))
-    def generate_crops(i):
-        # num of crops to be generated
-        img_idx = random.randint(1,len(input_files))
-        crop_l = random.randint(0,img_l - crop_size)
-        crop_h = random.randint(0,img_h - crop_size)
-        # crop_list.append([img_idx, [crop_h,crop_l]])
-        crop = [img_idx, [crop_h,crop_l]
-        
-        return crop
-    
-    crop_list = str(generate_crops)
+    # crop_list = str(generate_crops)
+
     with open(destination_txt_file, "w") as output:
-        output.write(crop_list)
+        output.write(str(crop_list))
 
     return crop_list
     
