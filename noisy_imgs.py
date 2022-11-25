@@ -4,6 +4,8 @@ generate noisy images for training
 import numpy as np
 import os
 import cv2 as cv
+import random
+from parfor import parfor
 import decompand
 from planetaryImageEDR import PDS3ImageEDR
 import pandas as pd
@@ -112,11 +114,34 @@ def generate_destripe_params(dark_calibration_folder, destination_folder, summed
         df.to_csv(os.path.join(param_destination, 'dark_summed_parameters.csv'), index=False)
 
 
-def generate_crop_list(clean_img_dir):
-    clean_files = os.listdir(clean_img_dir)
+def generate_crop_list(input_img_dir, num_crops, img_dims=(52224, 2532), destination_txt_file='crop_list.txt', crop_size=256):
+    input_files = os.listdir(input_img_dir)
+    
+    img_l = img_dims[0]
+    img_h = img_dims[1]
+    # crop_list = []
+    
+    @parfor(range(num_crops))
+    def generate_crops(i):
+        # num of crops to be generated
+        img_idx = random.randint(1,len(input_files))
+        crop_l = random.randint(0,img_l - crop_size)
+        crop_h = random.randint(0,img_h - crop_size)
+        # crop_list.append([img_idx, [crop_h,crop_l]])
+        crop = [img_idx, [crop_h,crop_l]
+        
+        return crop
+    
+    crop_list = str(generate_crops)
+    with open(destination_txt_file, "w") as output:
+        output.write(crop_list)
+
+    return crop_list
+    
 
 
-def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
+
+def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfield_img_path, calibration_frame_dir):
     '''
     Generate clean-noisy image pairs. Let's make this parallelized
     Workflow:
@@ -137,7 +162,46 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
     :param noisy_img_dir:
     :return:
     '''
+    
+    # set destination directories
     noisy_destination = destination_dir + 'noisy'
     clean_destination = destination_dir + 'clean'
+    
+    # get clean_files
     clean_files = os.listdir(clean_img_dir)
+    
+    window_size = 256
+
+    @parfor(len(crop_list), (crop_list,))
+    def noisy_img_pairs(i, c_list):
+        
+        image_index = c_list[0]
+        crops = c_list[1]
+        
+        # get image
+        image = cv.imread(clean_files[image_index])
+        
+        # get crops
+        clean_crops = [image[crop:crop+window_size] for crop in crops]
+        noisy_crops = []
+        
+        for patch in clean_crops:
+            # get each noise component
+            N = non_linearity(patch)
+            F = flatfield(patch, flatfield_img_path)
+            S_N_p = photon_noise(patch)
+            D = dark_noise(calibration_frame_dir) # do i need the directory here?
+            N_c = companding_noise(patch)
+        
+            # generate noisy patch
+            noisy_patch = np.matmul(N, np.matmul(F, S_N_p)) + D + N_c
+            
+            noisy_crops.append(noisy_patch)
+        
+        
+        
+        os.save(noisy_crops, noisy_destination)
+        os.save(clean_crops, clean_destination)
+        
+        return
 
