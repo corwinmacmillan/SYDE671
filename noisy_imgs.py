@@ -4,9 +4,9 @@ generate noisy images for training
 import numpy as np
 import os
 import cv2 as cv
-import decompand
+# import decompand
 import random
-import parfor
+from parfor import parfor
 
 
 def non_linearity(image):
@@ -78,16 +78,25 @@ def generate_destripe_pairs(dark_calibration_folder, destination_folder):
 def generate_crop_list(clean_img_dir):
     clean_files = os.listdir(clean_img_dir)
     
-    img_len = 2532
+    img_l = 52224
+    img_h = 2532
     crop_list = []
     
-    for i in range(100,000):
+    @parfor(range(100000))
+    def generate(i):
         # num of crops to be generated
         img_idx = random.randint(1,len(clean_files))
-        crop = random.randint(0,img_len - 256)
-        crop_list.append([img_idx, crop])
-    
+        crop_l = random.randint(0,img_l - 256)
+        crop_h = random.randint(0,img_h - 256)
+        crop_list.append([img_idx, [crop_h,crop_l]])
+        
         return(crop_list)
+   
+    with open("crop_list.txt", "w") as output:
+        output.write(str(generate))
+
+    return(crop_list)
+    
 
 
 
@@ -122,8 +131,11 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfiel
     
     window_size = 256
 
-    
-    for image_index, crops in crop_list:
+    @parfor(len(crop_list), (crop_list,))
+    def noisy_img_pairs(i, c_list):
+        
+        image_index = c_list[0]
+        crops = c_list[1]
         
         # get image
         image = cv.imread(clean_files[image_index])
@@ -145,7 +157,10 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfiel
             
             noisy_crops.append(noisy_patch)
         
-            
+        
+        
         os.save(noisy_crops, noisy_destination)
         os.save(clean_crops, clean_destination)
+        
+        return
 
