@@ -81,7 +81,7 @@ def generate_crop_list(clean_img_dir):
     img_len = 2532
     crop_list = []
     
-    for i in range(100,000):
+    for i in range(1e5):
         # num of crops to be generated
         img_idx = random.randint(1,len(clean_files))
         crop = random.randint(0,img_len - 256)
