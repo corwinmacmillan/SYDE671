@@ -141,19 +141,6 @@ def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dim
         crop_list.append([img_idx, crop_h, crop_l])
         i += img_num_crops
 
-    # @parfor(range(num_crops))
-    # def generate_crops(i):
-    #     # num of crops to be generated
-    #     img_idx = random.randint(1,len(input_files))
-    #     crop_l = random.randint(0,img_l - crop_size)
-    #     crop_h = random.randint(0,img_h - crop_size)
-    #     # crop_list.append([img_idx, [crop_h,crop_l]])
-    #     crop = [img_idx, [crop_h, crop_l]]
-    #
-    #     return crop
-    
-    # crop_list = str(generate_crops)
-
     with open(destination_txt_file, "w") as output:
         output.write(str(crop_list))
 
@@ -185,8 +172,8 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfiel
     '''
     
     # set destination directories
-    noisy_destination = destination_dir + 'noisy'
-    clean_destination = destination_dir + 'clean'
+    noisy_destination = os.path.join(destination_dir, 'noisy')
+    clean_destination = os.path.join(destination_dir, 'clean')
     
     # get clean_files
     clean_files = os.listdir(clean_img_dir)
@@ -197,25 +184,26 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, flatfiel
     def noisy_img_pairs(i, c_list):
         
         image_index = c_list[0]
-        crops = c_list[1]
+        crops_h = c_list[1]
+        crops_l = c_list[2]
         
         # get image
         image = cv.imread(clean_files[image_index])
-        
-        # get crops
-        clean_crops = [image[crop:crop+window_size] for crop in crops]
+        clean_crops = []
         noisy_crops = []
+        # get crops
+        for crop_h, crop_l in zip(crops_h, crops_l):
+            crop = image[crop_h:crop_h + window_size, crop_l:crop_l + window_size]
+            if np.median(crop) > 200:
+                clean_crops.append(rescale_DN(crop))
         
         for patch in clean_crops:
             # get each noise component
-            N = non_linearity(patch)
-            F = flatfield(patch, flatfield_img_path)
-            S_N_p = photon_noise(patch)
-            D = dark_noise(calibration_frame_dir) # do i need the directory here?
-            N_c = companding_noise(patch)
-        
-            # generate noisy patch
-            noisy_patch = np.matmul(N, np.matmul(F, S_N_p)) + D + N_c
+            noisy_patch = photon_noise(patch)
+            noisy_patch = flatfield(noisy_patch, flatfield_img_path)
+            noisy_patch = non_linearity(noisy_patch)
+            noisy_patch += dark_noise(calibration_frame_dir)
+            noisy_patch = companding_noise(noisy_patch)
             
             noisy_crops.append(noisy_patch)
         
