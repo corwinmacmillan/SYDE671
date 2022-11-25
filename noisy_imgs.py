@@ -75,29 +75,29 @@ def generate_destripe_pairs(dark_calibration_folder, destination_folder):
     dark_files = os.listdir(dark_calibration_folder)
 
 
-def generate_crop_list(clean_img_dir):
-    clean_files = os.listdir(clean_img_dir)
+def generate_crop_list(input_img_dir, num_crops, img_dims=(52224, 2532), destination_txt_file='crop_list.txt', crop_size=256):
+    input_files = os.listdir(input_img_dir)
     
-    img_l = 52224
-    img_h = 2532
-    crop_list = []
+    img_l = img_dims[0]
+    img_h = img_dims[1]
+    # crop_list = []
     
-<<<<<<< HEAD
-    @parfor(range(100000))
-    def generate(i):
->>>>>>> 73e70783c7469a7b38b40e7608aa9056b6f1eab9
+    @parfor(range(num_crops))
+    def generate_crops(i):
         # num of crops to be generated
-        img_idx = random.randint(1,len(clean_files))
-        crop_l = random.randint(0,img_l - 256)
-        crop_h = random.randint(0,img_h - 256)
-        crop_list.append([img_idx, [crop_h,crop_l]])
+        img_idx = random.randint(1,len(input_files))
+        crop_l = random.randint(0,img_l - crop_size)
+        crop_h = random.randint(0,img_h - crop_size)
+        # crop_list.append([img_idx, [crop_h,crop_l]])
+        crop = [img_idx, [crop_h,crop_l]
         
-        return(crop_list)
-   
-    with open("crop_list.txt", "w") as output:
-        output.write(str(generate))
+        return crop
+    
+    crop_list = str(generate_crops)
+    with open(destination_txt_file, "w") as output:
+        output.write(crop_list)
 
-    return(crop_list)
+    return crop_list
     
 
 
