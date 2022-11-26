@@ -34,7 +34,7 @@ def split_destripe(
     '''
         
     destripe_path_train = os.path.join(destripe_path, 'train')
-    destripe_path_val = os.path.jon(destripe_path_train, 'val')
+    destripe_path_val = os.path.join(destripe_path, 'val')
 
     # Check for train/val folders
     if not os.path.exists(destripe_path_train):
@@ -52,11 +52,11 @@ def split_destripe(
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=split_size)
 
     # Save training and validation data
-    X_train.to_csv(os.path.join(destripe_path_train, 'train_inputs'))
-    y_train.to_csv(os.path.join(destripe_path_train, 'train_labels'))
+    X_train.to_csv(os.path.join(destripe_path_train, 'train_inputs.csv'))
+    y_train.to_csv(os.path.join(destripe_path_train, 'train_labels.csv'))
 
-    X_val.to_csv(os.path.join(destripe_path_val, 'val_inputs'))
-    y_val.to_csv(os.path.join(destripe_path_val, 'val_labels'))
+    X_val.to_csv(os.path.join(destripe_path_val, 'val_inputs.csv'))
+    y_val.to_csv(os.path.join(destripe_path_val, 'val_labels.csv'))
     
 
 def destripe_loaders(
@@ -87,6 +87,8 @@ def destripe_loaders(
         label_file=label_val_files
     )
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
+
+    return train_loader, val_loader
 
 def photon_loaders(
     train_files,
