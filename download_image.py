@@ -12,6 +12,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import time
+from parfor import parfor
 
 
 def download_image(file_spec, filepath):
@@ -46,6 +47,19 @@ def download_image_list(img_csv, download_path, continuation_index=0):
         hours_left = round((sum_time/(i+1) * list_size - (i + continuation_index) * sum_time/(i+1))/3600, 2)
         print('File {}, {} / {}, estimated hours left: {}'.format(img_csv + file_spec[0], i + continuation_index,
                                                                   list_size, hours_left))
+
+
+def separate_camera_modes(camera_dir):
+    img_files = os.listdir(camera_dir)
+    @parfor(len(img_files))
+    def separate_files(i):
+        img_file = img_files[i]
+        if img_file[-6] == 'L':
+            os.rename(os.path.join(camera_dir, img_file), os.path.join(camera_dir, 'NAC_L/', img_file))
+        elif img_file[-6] == 'R':
+            os.rename(os.path.join(camera_dir, img_file), os.path.join(camera_dir, 'NAC_R/', img_file))
+        else:
+            raise RuntimeError('File name does not match expected ISIS naming convention')
 
 
 if __name__ == '__main__':
