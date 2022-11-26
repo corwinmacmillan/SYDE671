@@ -98,16 +98,16 @@ class MyIsis:
         
         return k
     
-    def flatfield(self, im, k='summed_L', forward=False):
+    def flatfield(self, im, k='summed_L', line_slice_start=0, line_slice_end=-1, forward=False):
         "run my own flatfield correction on an image array im"
         
         # k = self._validate(image, im, df)
         
         # AS PER ISIS
         if forward:
-            return im * self.myflatfields[k]# works via broadcasting
+            return im * self.myflatfields[k][line_slice_start:line_slice_end]# works via broadcasting
         else:
-            return im / self.myflatfields[k]
+            return im / self.myflatfields[k][line_slice_start:line_slice_end]
 
     def nonlinearity(self, im, k='summed_R', forward=False):
         "run my own (constant) nonlinearity correction on an image array im"
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     
     import matplotlib.pyplot as plt
     
-    I = MyIsis(isisdir="/home/panlab/anaconda3/envs/isis/data/lro/calibration/")
+    I = MyIsis(isisdir="/media/panlab/EXTERNALHDD/data/lro/calibration/")
         
     
     ## check values
