@@ -2,3 +2,4 @@ data/
 exmpl_imgs/test.ipynb
 test.ipynb
 test_running/
+__pycache__/
