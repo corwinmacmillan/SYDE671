@@ -16,7 +16,7 @@ import planetaryimage
 class MyIsis:
     "My class for carrying out (adapted) ISIS nonlinearity and flatfield correction"
     
-    def __init__(self, isisdir="/data/users/bmoseley/psr-enhancement/6_benchmark/isis/"):
+    def __init__(self, isisdir='/home/panlab/anaconda3/envs/isis/data/'):
         "load ISIS calibration coefficents"
         
         modes = ["normal", "summed"]
