@@ -16,10 +16,10 @@ from parfor import parfor
 
 
 def download_image(file_spec, filepath):
+    file_spec = file_spec.replace('3-CDR', '2-EDR')
+    file_spec = file_spec.replace('C.IMG', 'E.IMG')
+    file_spec = file_spec.replace('LRC_1', 'LRC_0')
     img_name = file_spec[-16:]
-    img_name = img_name.replace('3-CDR', '2-EDR')
-    img_name = img_name.replace('C.IMG', 'E.IMG')
-    img_name = img_name.replace('LRC_1', 'LRC_0')
     img_url = 'https://pds.lroc.asu.edu/data/' + file_spec
     # try:
     r = requests.get(img_url)
@@ -50,8 +50,8 @@ def download_image_list(img_csv, download_path, continuation_index=0):
 
 
 def separate_camera_modes(camera_dir):
-    img_files = os.listdir(camera_dir)
-    @parfor(len(img_files))
+    img_files = [f for f in os.listdir(camera_dir) if os.path.isfile(os.path.join(camera_dir, f))]
+    @parfor(range(len(img_files)))
     def separate_files(i):
         img_file = img_files[i]
         if img_file[-6] == 'L':
@@ -70,8 +70,9 @@ if __name__ == '__main__':
             pass
         else:
             download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/', 34)
-       
 
+        # if sub_dir == 'bright_summed' or sub_dir == 'dark_summed':
+        #     separate_camera_modes(download_dir + sub_dir + '/')
 
 
        
