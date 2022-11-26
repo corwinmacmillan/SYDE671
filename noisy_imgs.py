@@ -5,7 +5,7 @@ import numpy as np
 import os
 import cv2 as cv
 import decompand
-from planetaryImageEDR import PDS3ImageEDR
+from planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 import sys
 
@@ -82,7 +82,7 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
     np.set_printoptions(threshold=sys.maxsize)
 
     for i in range(len(dark_files)):
-        I = PDS3Image.open(os.path.join(dark_calibration_folder, dark_files[i]))
+        I = PDS3ImageEDR.open(os.path.join(dark_calibration_folder, dark_files[i]))
         labels = I.label
 
         for j in range(I.image.shape[0]):
@@ -103,11 +103,9 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
                     'CCD_temp': labels['LRO:TEMPERATURE_FPA'][0],
                     'Tele_temp': labels['LRO:TEMPERATURE_TELESCOPE'][0],
                     'SCS_temp': labels['LRO:TEMPERATURE_SCS'][0],
-                    'DAC_offset': [
-                        labels['LRO:DAC_RESET_LEVEL'],
-                        labels['LRO:CHANNEL_A_OFFSET'],
-                        labels['LRO:CHANNEL_B_OFFSET'],
-                    ],
+                    'DAC_reset': labels['LRO:DAC_RESET_LEVEL'],
+                    'DAC_A': labels['LRO:CHANNEL_A_OFFSET'],
+                    'DAC_B': labels['LRO:CHANNEL_B_OFFSET'],
                     'Masked_pix': masked_pix1 + masked_pix2,
                     'Pixel_line': line, 
                 }

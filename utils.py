@@ -17,6 +17,8 @@ from torchvision.transforms import (
     RandomHorizontalFlip,
     RandomVerticalFlip,
     RandomRotation,
+    ToTensor,
+    Compose,
 )
 
 from dataset import Destripe_Dataset
@@ -78,13 +80,13 @@ def destripe_loaders(
     '''
     train_ds = Destripe_Dataset(
         input_file=input_train_files, 
-        label_file=label_train_files
+        label_file=label_train_files,
     )
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
 
     val_ds = Destripe_Dataset(
         input_file=input_val_files,
-        label_file=label_val_files
+        label_file=label_val_files,
     )
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
 
