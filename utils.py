@@ -19,6 +19,8 @@ from torchvision.transforms import (
     RandomRotation,
 )
 
+from dataset import Destripe_Dataset
+
 def split_destripe(
     destripe_data,
     destripe_path,
@@ -57,19 +59,40 @@ def split_destripe(
     y_val.to_csv(os.path.join(destripe_path_val, 'val_labels'))
     
 
-def destripe_get_loaders(
-    train_files,
-    val_files,
+def destripe_loaders(
+    input_train_files,
+    label_train_files,
+    input_val_files,
+    label_val_files,
     batch_size,
-    shuffle,
+    shuffle=False,
 ):
-    pass
+    '''
+    :params:
+        input_train_files: model input train files
+        label_train_files: model label train files
+        input_val_files: model input val files
+        label_val_files: model label val files
+        batch_size: batch size for dataloader
+        shuffle=False: bool to shuffle loader
+    '''
+    train_ds = Destripe_Dataset(
+        input_file=input_train_files, 
+        label_file=label_train_files
+    )
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
 
-def photon_get_loaders(
+    val_ds = Destripe_Dataset(
+        input_file=input_val_files,
+        label_file=label_val_files
+    )
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
+
+def photon_loaders(
     train_files,
     val_files,
     batch_size,
-    shuffle,
+    shuffle=False,
 ):
     pass
 
