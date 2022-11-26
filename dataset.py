@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import torch
+import re
 from torch.utils.data import Dataset
 
 class Destripe_Dataset(Dataset):
@@ -20,9 +21,9 @@ class Destripe_Dataset(Dataset):
         mask_pix = np.fromstring(input_data[-1][1:-1], sep=',')
         input = np.concatenate((input_data[:-1], mask_pix)).astype(np.float32)
         
-        label_data = self.y.iloc[index, 2:].to_numpy()
-        mask_pix = np.fromstring(label_data[-1][1:-1], sep=',')
-        label = np.concatenate((label_data[:-1], mask_pix)).astype(np.float32)
+        label_data = self.y.iloc[index, 2:].to_numpy()[0]
+        label_data = re.sub('\n', '', label_data)
+        label = np.fromstring(label_data[1:-1], sep=' ').astype(np.float32)
 
         if self.transform is not None:
             input = self.transform(input)
