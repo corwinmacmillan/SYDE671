@@ -52,9 +52,9 @@ class PDS3ImageEDR(PDS3Image):
         # md5 check
         assert hashlib.md5(self.data.tobytes()).hexdigest() == self.label["IMAGE"]["MD5_CHECKSUM"]
         
-        # # product type check
-        # assert self.label["PRODUCT_TYPE"] == "EDR"
-        # assert self.label["PRODUCT_ID"].endswith("E")
+        # product type check
+        assert self.label["PRODUCT_TYPE"] == "EDR"
+        assert self.label["PRODUCT_ID"].endswith("E")
         
         # get image
         image = self.data.squeeze()
@@ -174,36 +174,41 @@ class PDSLabelEncoderEDR(pvl.encoder.PDSLabelEncoder):
     
     
     
-path = 'data\M107758599LC.IMG'
+path = '/media/panlab/EXTERNALHDD/bright_summed/NAC_L/1094901997LE.IMG'
     
     
 if __name__ == "__main__":
     
     import matplotlib.pyplot as plt
+    from matplotlib import use
+    use('TKAgg')
     
     
     ## test reading
+    '''NASA'''
     
+    # I = PDS3Image
+    # print(I.SAMPLE_TYPES)
     
-    I = PDS3Image
-    print(I.SAMPLE_TYPES)
-    
-    I = PDS3Image.open(path)
-    I.data = I.data.astype('uint8')
-    print(I.data.dtype)
-    print(I.data.min(), I.data.max())
-    print(I.image.dtype)
-    print(I.image.min(), I.image.max())
-    
-    # plot I.image
-    plt.figure(figsize=(20,3))
-    plt.imshow(I.image.astype(float), cmap="gray", vmin=20, vmax=60)
-    plt.colorbar()
-    plt.figure(figsize=(20,3))
-    for i in range(5): plt.plot(I.image[i,:])
-    
-    
-    print()
+    # I = PDS3Image.open(path)
+    # # I.data = I.data.astype('uint8')
+    # print(I.data.dtype)
+    # print(I.data.min(), I.data.max())
+    # print(I.image.dtype)
+    # print(I.image.min(), I.image.max())
+    #
+    # # plot I.image
+    # plt.figure(figsize=(20,3))
+    # plt.imshow(I.image.astype(float).T[:,:10000], cmap="gray", vmin=20, vmax=60)
+    # plt.colorbar()
+    # plt.figure(figsize=(20,3))
+    # for i in range(5):
+    #     print(I.image[i,:].shape)
+    #     plt.plot(I.image[i,:])
+    #
+    # plt.show()
+    '''MOSELEY'''
+
     I = PDS3ImageEDR
     print(I.SAMPLE_TYPES)
     
@@ -213,6 +218,7 @@ if __name__ == "__main__":
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
     print(I.image.min(), I.image.max())
+    print('median: {}'.format(np.median(I.image)))
     
     # plot I.image
     plt.figure(figsize=(20,3))
@@ -255,8 +261,8 @@ if __name__ == "__main__":
     plt.colorbar()
     
     I.update_image(I.image.astype(np.float32))
-    I.save("test")
-    I = PDS3Image.open("test")
+    I.save("test.IMG")
+    I = PDS3Image.open("test.IMG")
     a2 = I.image.copy()
     
     print(I.label)
