@@ -14,7 +14,14 @@ from train import (
     #photon_train_fn,
 )
 
+from tensorboard_utils import (
+    inspect_model,
+)
+
 from destripe import DestripeNet
+
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter('test_running/tensorboard')
 
 SPLIT_DESTRIPE = False
 
@@ -44,6 +51,7 @@ def main():
         in_channels=38,
         out_channels=1,
     ).to(hp.DEVICE)
+    inspect_model(writer, model, train_loader, hp.DEVICE)
 
     loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=hp.LEARNING_RATE)
@@ -57,6 +65,7 @@ def main():
         hp.NUM_EPOCH,
         hp.DEVICE,
         MODEL_PATH,
+        writer,
         val_interval=2,
     )
     

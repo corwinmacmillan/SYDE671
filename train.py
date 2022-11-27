@@ -7,6 +7,10 @@ from utils import(
     L1_loss
 )
 
+from tensorboard_utils import (
+    inspect_model,
+)
+
 def destripe_train_fn(
     train_loader, 
     val_loader, 
@@ -16,6 +20,7 @@ def destripe_train_fn(
     num_epoch, 
     device,
     model_path,
+    writer,
     val_interval=2,
 ):
 
@@ -37,6 +42,8 @@ def destripe_train_fn(
     val_loss_values = []
     train_L1_values = []
     val_L1_values = []
+    train_tb_index = 0
+    val_tb_index = 0
 
     for epoch in range(num_epoch):
         print('=' * 30,
@@ -66,6 +73,9 @@ def destripe_train_fn(
             optimizer.step()
 
             train_loss_epoch += loss.item()
+            # Visualize train loss
+            writer.add_scalar('Train Loss', train_loss_epoch, train_tb_index)
+            
             print(
                 f'{train_step}/{len(train_loader)}, '
                 f'Train loss: {loss.item():.4f}'
@@ -74,7 +84,11 @@ def destripe_train_fn(
             # L1 loss
             L1_error= L1_loss(outputs, labels)
             train_L1_epoch += L1_error
+            # Visualize L1 loss
+            writer.add_scalar('L1 Loss', train_L1_epoch, train_tb_index)
             print('Train L1 loss: {:.4f}'.format(train_L1_epoch))
+
+            train_tb_index += 1
 
         print('-' * 30)
 
@@ -85,6 +99,7 @@ def destripe_train_fn(
         # Append L1 loss
         train_L1_epoch /= train_step
         print('Training epoch L1 loss: {:.4f}'.format(train_L1_epoch))
+        train_L1_values.append(train_L1_epoch)
 
         # Validation
         if (epoch + 1) % val_interval == 0:
@@ -104,10 +119,14 @@ def destripe_train_fn(
 
                     val_loss = loss_fn(val_outputs, val_labels)
                     val_loss_epoch += val_loss.item()
+                    writer.add_scalar('Validation Loss', val_loss_epoch, val_tb_index)
 
                     # L1 loss
                     val_L1 = L1_loss(val_outputs, val_labels)
                     val_L1_epoch += val_L1
+                    writer.add_scalar('Validation L1 Loss', val_L1_epoch, val_tb_index)
+
+                    val_tb_index += 1
 
                 print('-' * 30)
                 val_loss_epoch /= val_step
@@ -130,6 +149,7 @@ def destripe_train_fn(
                 )
 
     print('---Training Completed--- \nBest L1 loss: {:.4f} at epoch {}'.format(best_L1, best_L1_epoch))
+    writer.close()
 
 def photon_train_fn():
     pass
