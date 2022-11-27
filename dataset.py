@@ -20,6 +20,7 @@ class Destripe_Dataset(Dataset):
         input_data = self.X.iloc[index, 2:].to_numpy()
         mask_pix = np.fromstring(input_data[-1][1:-1], sep=',')
         input = np.concatenate((input_data[:-1], mask_pix)).astype(np.float32)
+        input = input.reshape(38, 1)
         
         label_data = self.y.iloc[index, 2:].to_numpy()[0]
         label_data = re.sub('\n', '', label_data)

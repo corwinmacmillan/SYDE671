@@ -24,19 +24,19 @@ from torchvision.transforms import (
 from dataset import Destripe_Dataset
 
 def split_destripe(
-    destripe_data,
-    destripe_path,
+    destripe_data_csv,
+    destripe_data_path,
     split_size = 0.2
 ):
     '''
     :params:
-        destripe_data: csv of destripe inputs and labels from noisy_img.py
-        destripe_path: path to destripe train and val folders
+        destripe_data_csv: csv of destripe inputs and labels from noisy_img.py
+        destripe_data_path: path to destripe train and val folders
         split_size: validation dataset size for train_test_split()
     '''
         
-    destripe_path_train = os.path.join(destripe_path, 'train')
-    destripe_path_val = os.path.join(destripe_path, 'val')
+    destripe_path_train = os.path.join(destripe_data_path, 'train')
+    destripe_path_val = os.path.join(destripe_data_path, 'val')
 
     # Check for train/val folders
     if not os.path.exists(destripe_path_train):
@@ -45,7 +45,7 @@ def split_destripe(
         os.makedirs(destripe_path_val)
 
     # Read destripe data
-    df = pd.read_csv(destripe_data)
+    df = pd.read_csv(destripe_data_csv)
 
     # Split data into inputs and labels
     y = df[['Filename', 'Pixel_line']]
@@ -100,3 +100,7 @@ def photon_loaders(
 ):
     pass
 
+def L1_loss(prediction, label):
+    L1_abs_loss = nn.L1Loss()
+    value = L1_abs_loss(prediction, label).item()
+    return value
