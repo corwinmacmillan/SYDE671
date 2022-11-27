@@ -19,6 +19,7 @@ def download_image(file_spec, filepath):
     file_spec = file_spec.replace('3-CDR', '2-EDR')
     file_spec = file_spec.replace('C.IMG', 'E.IMG')
     file_spec = file_spec.replace('LRC_1', 'LRC_0')
+    #TODO: the file name doesn't actually consistently correpsond to the last 16 values
     img_name = file_spec[-16:]
     img_url = 'https://pds.lroc.asu.edu/data/' + file_spec
     # try:
@@ -63,16 +64,16 @@ def separate_camera_modes(camera_dir):
 
 
 if __name__ == '__main__':
-    csv_dir = 'edr/'
+    # csv_dir = 'edr/'
     download_dir = '/media/panlab/EXTERNALHDD/'
-    for csv_file in os.listdir(csv_dir):
-        if csv_file == 'bright_normal.csv' or csv_file == 'dark_normal.csv':
-            pass
-        else:
-            download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/', 34)
-
-        # if sub_dir == 'bright_summed' or sub_dir == 'dark_summed':
-        #     separate_camera_modes(download_dir + sub_dir + '/')
+    # for csv_file in os.listdir(csv_dir):
+    #     if csv_file == 'bright_normal.csv' or csv_file == 'dark_normal.csv':
+    #         pass
+    #     else:
+    #         download_image_list(csv_dir + csv_file, download_dir + csv_file[:-4] + '/', 34)
+    for sub_dir in os.listdir(download_dir):
+        if sub_dir == 'dark_summed' or sub_dir == 'bright_summed':
+            separate_camera_modes(download_dir + sub_dir + '/')
 
 
        
