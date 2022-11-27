@@ -70,7 +70,7 @@ class PDS3ImageEDR(PDS3Image):
         self._image = decompand.decompand(image.astype('uint8'), table)# decompanded image
         
         # get image identifier (using our naming scheme)
-        self.PRODUCT_ID = self.label["PRODUCT_ID"].replace("E","C")
+        self.PRODUCT_ID = self.label["PRODUCT_ID"]
         assert self.PRODUCT_ID in os.path.basename(self.filename)
         
         
@@ -174,7 +174,7 @@ class PDSLabelEncoderEDR(pvl.encoder.PDSLabelEncoder):
     
     
     
-path = '/media/panlab/EXTERNALHDD/bright_summed/NAC_L/1094901997LE.IMG'
+path = '/media/panlab/EXTERNALHDD/bright_summed/NAC_L/M1094901997LE.IMG'
     
     
 if __name__ == "__main__":
