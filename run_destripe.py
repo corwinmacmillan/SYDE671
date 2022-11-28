@@ -6,12 +6,10 @@ import torch.nn as nn
 from utils import (
     split_destripe,
     destripe_loaders,
-    photon_loaders,
 )
 
 from train import (
     destripe_train_fn,
-    #photon_train_fn,
 )
 
 from tensorboard_utils import (
@@ -23,12 +21,23 @@ from destripe import DestripeNet
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter('test_running/tensorboard')
 
+# Conditional functions in main()
 SPLIT_DESTRIPE = False
+'''
+SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py -> generate_destripe_data()
+                into training and validation folders
+'''
 
 # Paths
 DESTRIPE_DATA_CSV = 'test_running\dark_summed_data.csv'
 DESTRIPE_DATA_PATH = 'test_running'
 MODEL_PATH = 'test_running'
+'''
+DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
+DESTRIPE_DATA_PATH: path to destripe training and validation folders 
+                    (or folder where split_destripe() will generate training/validation folders)
+MODEL_PATH: path to where model is saved during training
+'''
 
 
 
@@ -44,7 +53,7 @@ def main():
         os.path.join(destripe_path_train, 'train_labels.csv'),
         os.path.join(destripe_path_val, 'val_inputs.csv'),
         os.path.join(destripe_path_val, 'val_labels.csv'),
-        batch_size=hp.BATCH_SIZE,
+        batch_size=hp.D_BATCH_SIZE,
     )
 
     model = DestripeNet(
@@ -54,7 +63,7 @@ def main():
     inspect_model(writer, model, train_loader, hp.DEVICE)
 
     loss_fn = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=hp.LEARNING_RATE)
+    optimizer = optim.Adam(model.parameters(), lr=hp.D_LEARNING_RATE)
 
     destripe_train_fn(
         train_loader,
@@ -62,7 +71,7 @@ def main():
         model,
         optimizer,
         loss_fn,
-        hp.NUM_EPOCH,
+        hp.D_NUM_EPOCH,
         hp.DEVICE,
         MODEL_PATH,
         writer,
