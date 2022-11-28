@@ -3,32 +3,52 @@ generate noisy images for training
 '''
 import numpy as np
 import os
-import cv2 as cv
+from parfor import parfor
 import decompand
 from planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 import sys
+from myisis import MyIsis
+# import cv2
+
+ISISROOT = "/media/panlab/EXTERNALHDD/data/lro/calibration/"
 
 
-def non_linearity(image):
+def non_linearity(image, mode_and_camera='summed_L'):
     '''
     add non-linearity response noise, leaving parameters a, b, c, and d as placeholder
     :param image: numpy array of dimensions (MxN)
     :return: img of same dimensions with non-linear response noise
     '''
-    img = np.zeros(image.shape)
-    return img
+    isis = MyIsis(ISISROOT)
+    img = isis.nonlinearity(image, mode_and_camera, forward=True)
+    return img.astype(np.uint16)
 
 
-def flatfield(image, flatfield_img_path):
+def rescale_DN(image):
+    '''
+    Rescale images to be between 0-60 DN
+    :param image:
+    :return:
+    '''
+    multiply_factor = np.random.rand() * 60
+    img = image / np.median(image) * multiply_factor
+    return img.astype(np.uint16)
+
+
+def flatfield(image, mode_and_camera='summed_R', line_slice_start=0, line_slice_end=-1):
     '''
     add flatfield response noise, leaving the image path to base flatfield response off of as placeholder
+    :param mode_and_camera: string denoting NAC mode (summed, normal) and NAC Camera (L, R)
+    :param line_slice_end: beginning column used for image crop
+    :param line_slice_start: ending column used for image crop
     :param image: numpy array of dimensions (MxN)
     :param flatfield_img_path: path to image(s?) to generate flatfield response noise
     :return: img of same dimensions with flatfield noise
     '''
-    img = np.zeros(image.shape)
-    return img
+    isis = MyIsis(ISISROOT)
+    img = isis.flatfield(image, k=mode_and_camera, line_slice_start=line_slice_start, line_slice_end=line_slice_end)
+    return img.astype(np.uint16)
 
 
 def photon_noise(image):
@@ -38,21 +58,25 @@ def photon_noise(image):
     :return:
     '''
     mean = np.mean(image)
-    Np = np.random.poisson(mean, size=image.shape)
-    return Np
+    Np = np.random.poisson(mean, size=image.shape).astype(np.uint16)
+    return image + Np
 
 
-def dark_noise(calibration_frame_dir, patch_size=(256,256)):
+def dark_noise(calibration_frame_dir, patch_size=256):
     '''
     Return random window of dark calibration frame, chosen from director of cropped calibration frames
     :param calibration_frame_dir:
     :return: random calibration frame window
     '''
-    from sklearn.feature_extraction.image import extract_patches_2d
+    # from sklearn.feature_extraction.image import extract_patches_2d
     files = os.listdir(calibration_frame_dir)
     rand_i = np.random.randint(0, len(files))
-    rand_img = PDS3ImageEDR.open(files[rand_i])
-    rand_patch = extract_patches_2d(rand_img, patch_size)
+    rand_img = PDS3ImageEDR.open(calibration_frame_dir + files[rand_i]).image
+    # rand_patch = extract_patches_2d(rand_img, patch_size)
+    img_dims = rand_img.shape
+    crop_l = np.random.randint(0, img_dims[1] - patch_size)
+    crop_h = np.random.randint(0, img_dims[0] - patch_size)
+    rand_patch = rand_img[crop_h:crop_h + patch_size, crop_l:crop_l + patch_size]
     return rand_patch
 
 
@@ -118,11 +142,30 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
         df.to_csv(os.path.join(param_destination, 'dark_normal_data.csv'), index=False)
 
 
-def generate_crop_list(clean_img_dir):
-    clean_files = os.listdir(clean_img_dir)
+def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dims=(52224, 2532),
+                       destination_npy_file='crop_list.npy', crop_size=256):
+    input_files = os.listdir(input_img_dir)
+
+    img_l = img_dims[1]
+    img_h = img_dims[0]
+    crop_list = []
+    i = 0
+
+    while i < total_num_crops:
+        img_idx = np.random.randint(0, len(input_files))
+        img_num_crops = np.random.randint(1, max_img_crops)
+        crop_l = np.random.randint(0, img_l - crop_size, img_num_crops)
+        crop_h = np.random.randint(0, img_h - crop_size, img_num_crops)
+        crop_list.append([img_idx, crop_h, crop_l])
+        i += img_num_crops
+
+    np.save(destination_npy_file, crop_list, allow_pickle=True)
+
+    return crop_list
 
 
-def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
+def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibration_frame_dir, mode_and_camera,
+                             crop_size=256):
     '''
     Generate clean-noisy image pairs. Let's make this parallelized
     Workflow:
@@ -143,7 +186,53 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list):
     :param noisy_img_dir:
     :return:
     '''
-    noisy_destination = destination_dir + 'noisy'
-    clean_destination = destination_dir + 'clean'
+
+    # set destination directories
+    noisy_destination = os.path.join(destination_dir, 'noisy/')
+    clean_destination = os.path.join(destination_dir, 'clean/')
+
+    # get clean_files
     clean_files = os.listdir(clean_img_dir)
 
+    @parfor(range(crop_list.shape[0]), (crop_list,))
+    def noisy_img_pairs(i, c_list):
+
+        image_index = c_list[i, 0]
+        crops_h = c_list[i, 1]
+        crops_l = c_list[i, 2]
+
+        # get image
+        img_file = clean_files[image_index]
+        image = PDS3ImageEDR.open(os.path.join(clean_img_dir, img_file)).image
+        # get crops
+        for crop_h, crop_l in zip(crops_h, crops_l):
+            clean_crop = image[crop_h:crop_h + crop_size, crop_l:crop_l + crop_size]
+            if np.median(clean_crop) > 200:
+                clean_crop = rescale_DN(clean_crop)
+                # get each noise component
+                noisy_patch = photon_noise(clean_crop)
+                noisy_patch = flatfield(noisy_patch, mode_and_camera=mode_and_camera,
+                                        line_slice_start=crop_l, line_slice_end=crop_l + crop_size)
+                noisy_patch = non_linearity(noisy_patch, mode_and_camera=mode_and_camera)
+                noisy_patch += dark_noise(calibration_frame_dir)
+                noisy_patch = companding_noise(noisy_patch)
+                with open(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'wb') as clean:
+                    clean.write(bytes(clean_crop))
+                with open(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'wb') as noisy:
+                    noisy.write(bytes(noisy_patch))
+                # cv2.imwrite(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), clean_crop)
+                # cv2.imwrite(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), noisy_patch)
+
+    for i in range(len(crop_list)):
+        noisy_img_pairs(i, crop_list)
+
+
+if __name__ == '__main__':
+    source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
+    # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
+    destination_dir = '/media/panlab/CHARVIHDD/SYDE671/PhotonNet/'
+    calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
+    for sub_dir in os.listdir(source_dir):
+        crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
+        generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
+                                 crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
