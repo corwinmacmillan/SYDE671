@@ -19,19 +19,19 @@ from tensorboard_utils import (
 from destripe import DestripeNet
 
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter('test_running/tensorboard')
+writer = SummaryWriter('destripe/tensorboard')
 
 # Conditional functions in main()
 SPLIT_DESTRIPE = False
 '''
-SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py -> generate_destripe_data()
-                into training and validation folders
+SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py -> 
+                generate_destripe_data() into training and validation folders
 '''
 
 # Paths
-DESTRIPE_DATA_CSV = 'test_running\dark_summed_data.csv'
-DESTRIPE_DATA_PATH = 'test_running'
-MODEL_PATH = 'test_running'
+DESTRIPE_DATA_CSV = 'DestripeNet\dark_summed_data.csv'
+DESTRIPE_DATA_PATH = 'DestripeNet'
+MODEL_PATH = 'DestripeNet'
 '''
 DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
 DESTRIPE_DATA_PATH: path to destripe training and validation folders 

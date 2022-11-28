@@ -74,7 +74,7 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
     :param summed: bool if using summed or normal images
     :return:
     '''
-    param_destination = os.path.join(destination_folder, 'parameters')
+    param_destination = os.path.join(destination_folder, 'DestripeNet')
     #dark_line_destination = os.path.join(destination_folder, 'calibration_lines')
     dark_files = os.listdir(dark_calibration_folder)
 
