@@ -8,7 +8,7 @@ import decompand
 from planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 from myisis import MyIsis
-import cv2
+# import cv2
 
 ISISROOT = "/media/panlab/EXTERNALHDD/data/lro/calibration/"
 
