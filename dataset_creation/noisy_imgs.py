@@ -116,12 +116,12 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed=T
                'DAC_A',
                'DAC_B',
                'Masked_pix',
-               'Pixel_line']
-    headers_df = pd.DataFrame(headers)
+               'Pixel_line_index']
+    headers = pd.DataFrame(columns=headers)
     if summed:
-        headers_df.T.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), index=False, mode='a')
+        headers.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), header=False, index=False, mode='a')
     else:
-        headers_df.T.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), index=False, mode='a')
+        headers.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), header=False, index=False, mode='a')
 
     @parfor(range(len(dark_files)))
     def generate_destripe(i):
@@ -151,12 +151,12 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed=T
                                labels['LRO:CHANNEL_A_OFFSET'],
                                labels['LRO:CHANNEL_B_OFFSET'],
                                masked_pix1 + masked_pix2,
-                               line
+                               j
                                ])
 
         df = pd.DataFrame(parameters)
         if summed:
-            df.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), header=False, index=False, mode='a')
+            df.to_csv(os.path.join(destination_folder,  'dark_summed_data.csv'), header=False, index=False, mode='a')
         else:
             df.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), header=False, index=False, mode='a')
 
@@ -218,7 +218,7 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
     # get clean_files
     clean_files = os.listdir(clean_img_dir)
 
-    @parfor(range(crop_list.shape[0]), (crop_list,))
+    # @parfor(range(crop_list.shape[0]), (crop_list,))
     def noisy_img_pairs(i, c_list):
 
         image_index = c_list[i, 0]
@@ -229,7 +229,9 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
         img_file = clean_files[image_index]
         image = PDS3ImageEDR.open(os.path.join(clean_img_dir, img_file)).image
         # get crops
-        for crop_h, crop_l in zip(crops_h, crops_l):
+        # for crop_h, crop_l in zip(crops_h, crops_l):
+        @parfor(len(range(crops_l)), (crops_h, ), (crops_l, ))
+        def add_noise(i, crop_h, crop_l):
             clean_crop = image[crop_h:crop_h + crop_size, crop_l:crop_l + crop_size]
             if np.median(clean_crop) > 200:
                 clean_crop = rescale_DN(clean_crop)
@@ -249,18 +251,23 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
 
         with open(mode_and_camera + '_completed.txt', 'a') as f:
             f.write(str(i) + '\n')
-    # for i in range(len(crop_list)):
-    #     noisy_img_pairs(i, crop_list)
+        # end = time.time()
+        # sum_time += end - start
+        # hours_left = round((sum_time / (i + 1) * len(dark_files) - i * sum_time / (i + 1)) / 3600, 2)
+        # print('Image {}, {} / {}, estimated hours left: {}'.format(dark_files[i], i, len(dark_files), hours_left))
+
+    for i in range(len(crop_list)):
+        noisy_img_pairs(i, crop_list)
 
 
 if __name__ == '__main__':
-    # source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
-    # # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
+    source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
+    # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
     destination_dir = '/media/panlab/CHARVIHDD/SYDE671/'
-    # calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
-    # for sub_dir in os.listdir(source_dir):
-    #     crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
-    #     generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
-    #                              crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
-    dark_calibration = '/media/panlab/EXTERNALHDD/dark_summed/'
-    generate_destripe_data(dark_calibration, destination_dir)
+    calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
+    for sub_dir in os.listdir(source_dir):
+        crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
+        generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
+                                 crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
+    # dark_calibration = '/media/panlab/EXTERNALHDD/dark_summed/'
+    # generate_destripe_data(dark_calibration, destination_dir)
