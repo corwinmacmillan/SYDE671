@@ -7,6 +7,7 @@ from parfor import parfor
 import decompand
 from planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
+import sys
 from myisis import MyIsis
 # import cv2
 
@@ -90,49 +91,55 @@ def companding_noise(image):
     return img
 
 
-def generate_destripe_params(dark_calibration_folder, destination_folder, summed):
+def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
     '''
     :param dark_calibration_folder:
     :param destination_folder:
     :param summed: bool if using summed or normal images
     :return:
     '''
-    param_destination = destination_folder + 'parameters'
-    calib_destination = destination_folder + 'calibration_frames'
+    param_destination = os.path.join(destination_folder, 'DestripeNet')
+    #dark_line_destination = os.path.join(destination_folder, 'calibration_lines')
     dark_files = os.listdir(dark_calibration_folder)
 
     parameters = []
+    np.set_printoptions(threshold=sys.maxsize)
 
     for i in range(len(dark_files)):
         I = PDS3ImageEDR.open(os.path.join(dark_calibration_folder, dark_files[i]))
         labels = I.label
+        for j in range(I.image.shape[0]):
+            line = I.image[i, :]
 
-        if summed:
-            masked_pix1 = list(I.image[0, :11])
-            masked_pix2 = list(I.image[-1, -19:])
-        else:
-            masked_pix1 = list(I.image[0, :21])
-            masked_pix2 = list(I.image[-1, -39:])
+            if summed:
+                masked_pix1 = list(line[:11])
+                masked_pix2 = list(line[-19:])
+            else:
+                masked_pix1 = list(line[:21])
+                masked_pix2 = list(line[-39:])
+                
+            parameters.append(
+                {
+                    'Filename': dark_files[i],
+                    'Orbit_num': labels['ORBIT_NUMBER'],
+                    'FPGA_temp': labels['LRO:TEMPERATURE_FPGA'][0],
+                    'CCD_temp': labels['LRO:TEMPERATURE_FPA'][0],
+                    'Tele_temp': labels['LRO:TEMPERATURE_TELESCOPE'][0],
+                    'SCS_temp': labels['LRO:TEMPERATURE_SCS'][0],
+                    'DAC_reset': labels['LRO:DAC_RESET_LEVEL'],
+                    'DAC_A': labels['LRO:CHANNEL_A_OFFSET'],
+                    'DAC_B': labels['LRO:CHANNEL_B_OFFSET'],
+                    'Masked_pix': masked_pix1 + masked_pix2,
+                    'Pixel_line': line, 
+                }
+            )
+        
+    df = pd.DataFrame(parameters)
+    if summed:
+        df.to_csv(os.path.join(param_destination, 'dark_summed_data.csv'), index=False)
+    else:
+        df.to_csv(os.path.join(param_destination, 'dark_normal_data.csv'), index=False)
 
-        parameters.append(
-            {
-                'Filename': dark_files[i],
-                'Orbit_num': labels['ORBIT_NUMBER'],
-                'FPGA_temp': labels['LRO:TEMPERATURE_FPGA'][0],
-                'CCD_temp': labels['LRO:TEMPERATURE_FPA'][0],
-                'Tele_temp': labels['LRO:TEMPERATURE_TELESCOPE'][0],
-                'SCS_temp': labels['LRO:TEMPERATURE_SCS'][0],
-                'DAC_offset': [
-                    labels['LRO:DAC_RESET_LEVEL'],
-                    labels['LRO:CHANNEL_A_OFFSET'],
-                    labels['LRO:CHANNEL_B_OFFSET'],
-                ],
-                'Masked_pix': masked_pix1 + masked_pix2
-            }
-        )
-
-        df = pd.DataFrame(parameters)
-        df.to_csv(os.path.join(param_destination, 'dark_summed_parameters.csv'), index=False)
 
 
 def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dims=(52224, 2532),
