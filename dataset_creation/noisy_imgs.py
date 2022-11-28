@@ -1,14 +1,17 @@
 '''
 generate noisy images for training
 '''
+import time
+
 import numpy as np
 import os
 from parfor import parfor
-import decompand
-from planetaryimageEDR import PDS3ImageEDR
+from utils import decompand
+from utils.planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 import sys
-from myisis import MyIsis
+from utils.myisis import MyIsis
+
 # import cv2
 
 ISISROOT = "/media/panlab/EXTERNALHDD/data/lro/calibration/"
@@ -91,25 +94,45 @@ def companding_noise(image):
     return img
 
 
-def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
+def generate_destripe_data(dark_calibration_folder, destination_folder, summed=True):
     '''
     :param dark_calibration_folder:
     :param destination_folder:
     :param summed: bool if using summed or normal images
     :return:
     '''
-    param_destination = os.path.join(destination_folder, 'DestripeNet')
-    #dark_line_destination = os.path.join(destination_folder, 'calibration_lines')
+    # param_destination = os.path.join(destination_folder, 'DestripeNet')
+    # dark_line_destination = os.path.join(destination_folder, 'calibration_lines')
     dark_files = os.listdir(dark_calibration_folder)
 
-    parameters = []
-    np.set_printoptions(threshold=sys.maxsize)
+    # sum_time = 0
+    headers = ['Filename',
+               'Orbit_num',
+               'FPGA_temp',
+               'CCD_temp',
+               'Tele_temp',
+               'SCS_temp',
+               'DAC_reset',
+               'DAC_A',
+               'DAC_B',
+               'Masked_pix',
+               'Pixel_line']
+    headers_df = pd.DataFrame(headers)
+    if summed:
+        headers_df.T.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), index=False, mode='a')
+    else:
+        headers_df.T.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), index=False, mode='a')
 
-    for i in range(len(dark_files)):
+    @parfor(range(len(dark_files)))
+    def generate_destripe(i):
+    # for i in range(len(dark_files)):
+    #     start = time.time()
         I = PDS3ImageEDR.open(os.path.join(dark_calibration_folder, dark_files[i]))
+        np.set_printoptions(threshold=sys.maxsize)
         labels = I.label
+        parameters = []
         for j in range(I.image.shape[0]):
-            line = I.image[i, :]
+            line = I.image[j, :]
 
             if summed:
                 masked_pix1 = list(line[:11])
@@ -117,29 +140,30 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
             else:
                 masked_pix1 = list(line[:21])
                 masked_pix2 = list(line[-39:])
-                
-            parameters.append(
-                {
-                    'Filename': dark_files[i],
-                    'Orbit_num': labels['ORBIT_NUMBER'],
-                    'FPGA_temp': labels['LRO:TEMPERATURE_FPGA'][0],
-                    'CCD_temp': labels['LRO:TEMPERATURE_FPA'][0],
-                    'Tele_temp': labels['LRO:TEMPERATURE_TELESCOPE'][0],
-                    'SCS_temp': labels['LRO:TEMPERATURE_SCS'][0],
-                    'DAC_reset': labels['LRO:DAC_RESET_LEVEL'],
-                    'DAC_A': labels['LRO:CHANNEL_A_OFFSET'],
-                    'DAC_B': labels['LRO:CHANNEL_B_OFFSET'],
-                    'Masked_pix': masked_pix1 + masked_pix2,
-                    'Pixel_line': line, 
-                }
-            )
-        
-    df = pd.DataFrame(parameters)
-    if summed:
-        df.to_csv(os.path.join(param_destination, 'dark_summed_data.csv'), index=False)
-    else:
-        df.to_csv(os.path.join(param_destination, 'dark_normal_data.csv'), index=False)
 
+            parameters.append([dark_files[i],
+                               labels['ORBIT_NUMBER'],
+                               labels['LRO:TEMPERATURE_FPGA'][0],
+                               labels['LRO:TEMPERATURE_FPA'][0],
+                               labels['LRO:TEMPERATURE_TELESCOPE'][0],
+                               labels['LRO:TEMPERATURE_SCS'][0],
+                               labels['LRO:DAC_RESET_LEVEL'],
+                               labels['LRO:CHANNEL_A_OFFSET'],
+                               labels['LRO:CHANNEL_B_OFFSET'],
+                               masked_pix1 + masked_pix2,
+                               line
+                               ])
+
+        df = pd.DataFrame(parameters)
+        if summed:
+            df.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), header=False, index=False, mode='a')
+        else:
+            df.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), header=False, index=False, mode='a')
+
+        # end = time.time()
+        # sum_time += end - start
+        # hours_left = round((sum_time / (i + 1) * len(dark_files) - i * sum_time / (i + 1)) / 3600, 2)
+        # print('Image {}, {} / {}, estimated hours left: {}'.format(dark_files[i], i, len(dark_files), hours_left))
 
 def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dims=(52224, 2532),
                        destination_npy_file='crop_list.npy', crop_size=256):
@@ -222,16 +246,20 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
                 # cv2.imwrite(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), clean_crop)
                 # cv2.imwrite(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), noisy_patch)
 
-    for i in range(len(crop_list)):
-        noisy_img_pairs(i, crop_list)
+        with open(mode_and_camera + '_completed.txt', 'a') as f:
+            f.write(str(i) + '\n')
+    # for i in range(len(crop_list)):
+    #     noisy_img_pairs(i, crop_list)
 
 
 if __name__ == '__main__':
-    source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
-    # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
-    destination_dir = '/media/panlab/CHARVIHDD/SYDE671/PhotonNet/'
-    calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
-    for sub_dir in os.listdir(source_dir):
-        crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
-        generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
-                                 crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
+    # source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
+    # # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
+    destination_dir = '/media/panlab/CHARVIHDD/SYDE671/'
+    # calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
+    # for sub_dir in os.listdir(source_dir):
+    #     crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
+    #     generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
+    #                              crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
+    dark_calibration = '/media/panlab/EXTERNALHDD/dark_summed/'
+    generate_destripe_data(dark_calibration, destination_dir)

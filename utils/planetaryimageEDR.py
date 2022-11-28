@@ -20,7 +20,7 @@ import numpy as np
 
 import pvl
 from planetaryimage import PDS3Image
-import decompand
+from utils import decompand
 
 
 
