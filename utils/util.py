@@ -42,11 +42,11 @@ def split_destripe(
         os.makedirs(destripe_path_test)
 
     # Read destripe data
-    df = pd.read_csv(destripe_data_csv)
+    df = pd.read_csv(destripe_data_csv, header=0)
 
     # Split data into inputs and labels
     y = df[['Filename', 'Pixel_line_index']]
-    X = df.drop('Pixel_line', axis=1)
+    X = df.drop('Pixel_line_index', axis=1)
 
     X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=test_split_size)
 

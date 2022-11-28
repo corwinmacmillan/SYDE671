@@ -38,9 +38,9 @@ class Destripe_Dataset(Dataset):
         # label = np.fromstring(label_data[1:-1], sep=' ').astype(np.float32)
 
         line_index = self.y.iloc[index, 2]
-        filename = self.iloc[index, 1]
+        filename = self.y.iloc[index, 1]
         I = PDS3ImageEDR.open(os.path.join(self.image_path, filename))
-        label = I.image[line_index, :]
+        label = I.image[line_index, :].astype(np.float32)
 
         if self.transform is not None:
             input = self.transform(input)

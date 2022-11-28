@@ -16,7 +16,7 @@ def destripe_train_fn(
     device,
     model_path,
     writer,
-    val_interval=2,
+    val_interval=1,
 ):
     '''
     Training function for DestripeNet
@@ -133,6 +133,16 @@ def destripe_train_fn(
                 val_L1_epoch /= val_step
                 print('Validation epoch metric: {:.4f}'.format(val_L1_epoch))
                 val_L1_values.append(val_L1_epoch)
+
+                torch.save({'epoch': epoch,
+                            'model_state_dict': model.state_dict,
+                            'optim_state_dict': optimizer.state_dict,
+                            'train_loss': train_loss_epoch,
+                            'val_loss': val_loss_epoch},
+                           os.path.join(model_path, 'checkpoint_{}.pth'.format(epoch + 1))
+                           )
+                if epoch > 0:
+                    os.remove(os.path.join(model_path, 'checkpoint_{}.pth'.format(epoch)))
 
                 if val_L1_epoch < best_L1:
                     best_L1 = val_L1_epoch

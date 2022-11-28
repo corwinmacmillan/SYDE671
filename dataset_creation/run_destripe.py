@@ -19,20 +19,20 @@ from models.tensorboard_utils import (
 from models.destripe import DestripeNet
 
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter('destripe/tensorboard')
+writer = SummaryWriter('tensorboard')
 
 # Conditional functions in main()
-SPLIT_DESTRIPE = True
+SPLIT_DESTRIPE = False
 '''
 SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py -> 
                 generate_destripe_data() into training and validation folders
 '''
 
 # Paths
-DESTRIPE_DATA_CSV = '/media/panlab/EXTERNALHDD/dark_summed/dark_summed_data.csv'
-DESTRIPE_DATA_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
-MODEL_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
-IMAGE_PATH = ''
+DESTRIPE_DATA_CSV = ''
+DESTRIPE_DATA_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L'
+MODEL_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/model/'
+IMAGE_PATH = '/media/panlab/EXTERNALHDD/dark_summed/NAC_L/images'
 '''
 DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
 DESTRIPE_DATA_PATH: path to destripe training and validation folders 
@@ -63,7 +63,7 @@ def main():
         in_channels=38,
         out_channels=1,
     ).to(hp.DEVICE)
-    inspect_model(writer, model, train_loader, hp.DEVICE)
+    #inspect_model(writer, model, train_loader, hp.DEVICE)
 
     loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=hp.D_LEARNING_RATE)

@@ -119,9 +119,9 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed=T
                'Pixel_line_index']
     headers = pd.DataFrame(columns=headers)
     if summed:
-        headers.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), header=False, index=False, mode='a')
+        headers.to_csv(os.path.join(destination_folder, 'dark_summed_data.csv'), index=False, mode='w')
     else:
-        headers.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), header=False, index=False, mode='a')
+        headers.to_csv(os.path.join(destination_folder, 'dark_normal_data.csv'), index=False, mode='w')
 
     @parfor(range(len(dark_files)))
     def generate_destripe(i):
