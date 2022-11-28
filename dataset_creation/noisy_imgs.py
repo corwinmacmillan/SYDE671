@@ -165,7 +165,6 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed=T
         # hours_left = round((sum_time / (i + 1) * len(dark_files) - i * sum_time / (i + 1)) / 3600, 2)
         # print('Image {}, {} / {}, estimated hours left: {}'.format(dark_files[i], i, len(dark_files), hours_left))
 
-
 def generate_crop_list(input_img_dir, total_num_crops, max_img_crops=50, img_dims=(52224, 2532),
                        destination_npy_file='crop_list.npy', crop_size=256):
     input_files = os.listdir(input_img_dir)

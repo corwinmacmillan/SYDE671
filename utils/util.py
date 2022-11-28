@@ -17,33 +17,45 @@ from dataset_creation.dataset import Destripe_Dataset, Photon_Dataset
 def split_destripe(
     destripe_data_csv,
     destripe_data_path,
-    split_size = 0.2
+    test_split_size = 0.05, # 5% test
+    val_split_size = 0.158 # for 80% train, 15% val
 ):
     '''
     Splits the .csv file of DestripeNet inputs and labels into a training and validation set
     :params:
         destripe_data_csv: .csv file of destripe inputs and labels from noisy_img.py -> generate_destripe_data()
-        destripe_data_path: path to parent folder of destripe train and val folders
-        split_size: validation dataset size for train_test_split()
+        destripe_data_path: path to parent folder of destripe train, val, and test folders
+        test_split_size: test dataset size for train_test_split()
+        val_split_size: validation dataset size for train_test_split()
     '''
         
     destripe_path_train = os.path.join(destripe_data_path, 'train')
     destripe_path_val = os.path.join(destripe_data_path, 'val')
+    destripe_path_test = os.path.join(destripe_data_path, 'test')
 
     # Check for train/val folders
     if not os.path.exists(destripe_path_train):
         os.makedirs(destripe_path_train)
     if not os.path.exists(destripe_path_val):
         os.makedirs(destripe_path_val)
+    if not os.path.exists(destripe_path_test):
+        os.makedirs(destripe_path_test)
 
     # Read destripe data
     df = pd.read_csv(destripe_data_csv)
 
     # Split data into inputs and labels
-    y = df[['Filename', 'Pixel_line']]
+    y = df[['Filename', 'Pixel_line_index']]
     X = df.drop('Pixel_line', axis=1)
 
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=split_size)
+    X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=test_split_size)
+
+    # Save test data
+    X_test.to_csv(os.path.join(destripe_path_test, 'test_inputs.csv'))
+    y_test.to_csv(os.path.join(destripe_path_test, 'test_labels.csv'))
+
+    # Split again for training and validation data
+    X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=val_split_size)
 
     # Save training and validation data
     X_train.to_csv(os.path.join(destripe_path_train, 'train_inputs.csv'))
@@ -58,6 +70,7 @@ def destripe_loaders(
     label_train_file,
     input_val_file,
     label_val_file,
+    image_path,
     batch_size,
     shuffle=False,
 ):
@@ -68,18 +81,21 @@ def destripe_loaders(
         label_train_file: model label train file (.csv)
         input_val_file: model input val file (.csv)
         label_val_file: model label val file (.csv)
+        image_path:
         batch_size: batch size for dataloader
         shuffle=False: bool to shuffle loader
     '''
     train_ds = Destripe_Dataset(
         input_file=input_train_file, 
         label_file=label_train_file,
+        image_path=image_path,
     )
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
 
     val_ds = Destripe_Dataset(
         input_file=input_val_file,
         label_file=label_val_file,
+        image_path=image_path,
     )
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
 

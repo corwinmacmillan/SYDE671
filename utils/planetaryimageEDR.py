@@ -29,6 +29,8 @@ class PDS3ImageEDR(PDS3Image):
     8-bit values to 12-bit instrument DN values and checking md5 file integrity.
     """
     
+    ##INPUT IS IMAGE PATH##
+
     # this fixes the decoding bug by overriding the class SAMPLE_TYPE and DTYPES attributes
     # i.e. the EDR image (self.data) is loaded correctly as 8-bit unsigned integers
     
@@ -50,7 +52,7 @@ class PDS3ImageEDR(PDS3Image):
         super().__init__(*args, **kwargs)
         
         # md5 check
-        assert hashlib.md5(self.data.tobytes()).hexdigest() == self.label["IMAGE"]["MD5_CHECKSUM"]
+        assert hashlib.md5(self.data.tobytes()).hexdigest() == self.label["IMAGE"]["MD5_CHECKSUM"] # Check if image and label (meta data) of data match
         
         # product type check
         assert self.label["PRODUCT_TYPE"] == "EDR"
@@ -63,8 +65,8 @@ class PDS3ImageEDR(PDS3Image):
         # 8-bit unsigned integers to the original 12-bit unsigned integers
         # recorded on the instrument, cast as 16-bit unsigned integers 
         # (because numpy does not support 12-bit integers).
-        table = self.label["LRO:COMPAND_CODE"]# integer table number
-        assert self.label["LRO:BTERM"] == decompand._bterms[table]# check terms are as expected
+        table = self.label["LRO:COMPAND_CODE"]# integer table number (in Appendix B)
+        assert self.label["LRO:BTERM"] == decompand._bterms[table]# check terms for companding are as expected
         assert self.label["LRO:XTERM"] == decompand._xterms[table]
         assert self.label["LRO:MTERM"] == decompand._mterms[table]
         self._image = decompand.decompand(image.astype('uint8'), table)# decompanded image
@@ -213,7 +215,7 @@ if __name__ == "__main__":
     print(I.SAMPLE_TYPES)
     
     I = PDS3ImageEDR.open(path)
-    # I.data = I.data.astype('uint8')
+    I.data = I.data.astype('uint8')
     print(I.data.dtype)
     print(I.data.min(), I.data.max())
     print(I.image.dtype)
