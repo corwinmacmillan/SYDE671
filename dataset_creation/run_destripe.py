@@ -1,6 +1,6 @@
 import os
 import torch.optim as optim
-import hyperparameters as hp
+from models import hyperparameters as hp
 import torch.nn as nn
 
 from utils import (
@@ -8,15 +8,15 @@ from utils import (
     destripe_loaders,
 )
 
-from train import (
+from models.train import (
     destripe_train_fn,
 )
 
-from tensorboard_utils import (
+from models.tensorboard_utils import (
     inspect_model,
 )
 
-from destripe import DestripeNet
+from models.destripe import DestripeNet
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter('destripe/tensorboard')

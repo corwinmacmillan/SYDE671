@@ -4,11 +4,11 @@ generate noisy images for training
 import numpy as np
 import os
 from parfor import parfor
-import decompand
-from planetaryimageEDR import PDS3ImageEDR
+from utils import decompand
+from utils.planetaryimageEDR import PDS3ImageEDR
 import pandas as pd
 import sys
-from myisis import MyIsis
+from utils.myisis import MyIsis
 # import cv2
 
 ISISROOT = "/media/panlab/EXTERNALHDD/data/lro/calibration/"
@@ -223,8 +223,10 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
                 # cv2.imwrite(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), clean_crop)
                 # cv2.imwrite(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), noisy_patch)
 
-    for i in range(len(crop_list)):
-        noisy_img_pairs(i, crop_list)
+        with open(mode_and_camera + '_completed.txt', 'a') as f:
+            f.write(str(i) + '\n')
+    # for i in range(len(crop_list)):
+    #     noisy_img_pairs(i, crop_list)
 
 
 if __name__ == '__main__':
