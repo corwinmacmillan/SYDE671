@@ -3,7 +3,7 @@ import torch.optim as optim
 from models import hyperparameters as hp
 import torch.nn as nn
 
-from utils import (
+from utils.util import (
     split_destripe,
     destripe_loaders,
 )
@@ -22,16 +22,16 @@ from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter('destripe/tensorboard')
 
 # Conditional functions in main()
-SPLIT_DESTRIPE = False
+SPLIT_DESTRIPE = True
 '''
 SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py -> 
                 generate_destripe_data() into training and validation folders
 '''
 
 # Paths
-DESTRIPE_DATA_CSV = 'DestripeNet\dark_summed_data.csv'
-DESTRIPE_DATA_PATH = 'DestripeNet'
-MODEL_PATH = 'DestripeNet'
+DESTRIPE_DATA_CSV = '/media/panlab/EXTERNALHDD/dark_summed/dark_summed_data.csv'
+DESTRIPE_DATA_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
+MODEL_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
 '''
 DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
 DESTRIPE_DATA_PATH: path to destripe training and validation folders 
