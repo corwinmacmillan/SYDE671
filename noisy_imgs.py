@@ -108,7 +108,6 @@ def generate_destripe_data(dark_calibration_folder, destination_folder, summed):
     for i in range(len(dark_files)):
         I = PDS3ImageEDR.open(os.path.join(dark_calibration_folder, dark_files[i]))
         labels = I.label
-
         for j in range(I.image.shape[0]):
             line = I.image[i, :]
 
