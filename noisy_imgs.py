@@ -30,8 +30,8 @@ def rescale_DN(image):
     :param image:
     :return:
     '''
-    multiply_factor = np.random.randint(1, 61)
-    img = image // np.median(image) * multiply_factor
+    multiply_factor = np.random.rand() * 60
+    img = image / np.median(image) * multiply_factor
     return img.astype(np.uint16)
 
 
@@ -209,15 +209,15 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
                 noisy_patch = non_linearity(noisy_patch, mode_and_camera=mode_and_camera)
                 noisy_patch += dark_noise(calibration_frame_dir)
                 noisy_patch = companding_noise(noisy_patch)
-                # with open(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'w') as clean:
-                #     clean.write(clean_crop)
-                # with open(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'w') as noisy:
-                #     noisy.write(noisy_patch)
-                cv2.imwrite(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), clean_crop)
-                cv2.imwrite(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), noisy_patch)
+                with open(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'wb') as clean:
+                    clean.write(bytes(clean_crop))
+                with open(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file), 'wb') as noisy:
+                    noisy.write(bytes(noisy_patch))
+                # cv2.imwrite(os.path.join(clean_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), clean_crop)
+                # cv2.imwrite(os.path.join(noisy_destination, '{}_{}_'.format(crop_h, crop_l) + img_file[:-3] + 'png'), noisy_patch)
 
-    # for i in range(len(crop_list)):
-    #     noisy_img_pairs(i, crop_list)
+    for i in range(len(crop_list)):
+        noisy_img_pairs(i, crop_list)
 
 
 if __name__ == '__main__':
