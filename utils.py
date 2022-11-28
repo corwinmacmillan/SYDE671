@@ -21,7 +21,7 @@ from torchvision.transforms import (
     Compose,
 )
 
-from dataset import Destripe_Dataset
+from dataset import Destripe_Dataset, Photon_Dataset
 
 def split_destripe(
     destripe_data_csv,
@@ -30,8 +30,8 @@ def split_destripe(
 ):
     '''
     :params:
-        destripe_data_csv: csv of destripe inputs and labels from noisy_img.py
-        destripe_data_path: path to destripe train and val folders
+        destripe_data_csv: .csv file of destripe inputs and labels from noisy_img.py -> generate_destripe_data()
+        destripe_data_path: path to parent folder of destripe train and val folders
         split_size: validation dataset size for train_test_split()
     '''
         
@@ -93,12 +93,35 @@ def destripe_loaders(
     return train_loader, val_loader
 
 def photon_loaders(
-    train_files,
-    val_files,
+    input_train_path,
+    label_train_path,
+    input_val_path,
+    label_val_path,
     batch_size,
     shuffle=False,
 ):
-    pass
+    '''
+    :params:
+        input_train_path: model input train path
+        label_train_path: model label train path
+        input_val_path: model input val path
+        label_val_path: model label val path
+        batch_size: batch size for dataloader
+        shuffle=False: bool to shuffle loader
+    '''
+    train_ds = Photon_Dataset(
+        image_dir=input_train_path,
+        label_dir=label_train_path,
+    )
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
+
+    val_ds = Photon_Dataset(
+        image_dir=input_val_path,
+        label_dir=label_val_path,
+    )
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
+
+    return train_loader, val_loader
 
 def L1_loss(prediction, label):
     L1_abs_loss = nn.L1Loss()
