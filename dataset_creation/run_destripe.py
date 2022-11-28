@@ -32,11 +32,13 @@ SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py ->
 DESTRIPE_DATA_CSV = '/media/panlab/EXTERNALHDD/dark_summed/dark_summed_data.csv'
 DESTRIPE_DATA_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
 MODEL_PATH = '/media/panlab/CHARVIHDD/SYDE671/DestripeNet'
+IMAGE_PATH = ''
 '''
 DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
 DESTRIPE_DATA_PATH: path to destripe training and validation folders 
                     (or folder where split_destripe() will generate training/validation folders)
 MODEL_PATH: path to where model is saved during training
+IMAGE_PATH: path to images for for destripe training
 '''
 
 
@@ -53,6 +55,7 @@ def main():
         os.path.join(destripe_path_train, 'train_labels.csv'),
         os.path.join(destripe_path_val, 'val_inputs.csv'),
         os.path.join(destripe_path_val, 'val_labels.csv'),
+        IMAGE_PATH,
         batch_size=hp.D_BATCH_SIZE,
     )
 

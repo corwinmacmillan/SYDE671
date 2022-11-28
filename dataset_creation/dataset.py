@@ -5,6 +5,7 @@ import re
 import os
 import cv2
 from torch.utils.data import Dataset
+from utils.planetaryimageEDR import PDS3ImageEDR
 
 class Destripe_Dataset(Dataset):
     '''
@@ -14,10 +15,11 @@ class Destripe_Dataset(Dataset):
         self.X: input .csv file
         self.transform: transforms
     '''
-    def __init__(self, input_file, label_file, transform=None):
+    def __init__(self, input_file, label_file, image_path, transform=None):
         # Read input and output csv
         self.y = pd.read_csv(label_file)
         self.X = pd.read_csv(input_file)
+        self.image_path = image_path
         self.transform = transform
     def __len__(self):
         return len(self.X)
@@ -31,9 +33,14 @@ class Destripe_Dataset(Dataset):
         input = np.concatenate((input_data[:-1], mask_pix)).astype(np.float32)
         input = input.reshape(38, 1)
         
-        label_data = self.y.iloc[index, 2:].to_numpy()[0]
-        label_data = re.sub('\n', '', label_data)
-        label = np.fromstring(label_data[1:-1], sep=' ').astype(np.float32)
+        # label_data = self.y.iloc[index, 2:].to_numpy()[0]
+        # label_data = re.sub('\n', '', label_data)
+        # label = np.fromstring(label_data[1:-1], sep=' ').astype(np.float32)
+
+        line_index = self.y.iloc[index, 2]
+        filename = self.iloc[index, 1]
+        I = PDS3ImageEDR.open(os.path.join(self.image_path, filename))
+        label = I.image[line_index, :]
 
         if self.transform is not None:
             input = self.transform(input)
