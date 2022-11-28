@@ -2,9 +2,18 @@ import pandas as pd
 import numpy as np
 import torch
 import re
+import os
+import cv2
 from torch.utils.data import Dataset
 
 class Destripe_Dataset(Dataset):
+    '''
+    DestripeNet dataset
+    :params:
+        self.y: label .csv file
+        self.X: input .csv file
+        self.transform: transforms
+    '''
     def __init__(self, input_file, label_file, transform=None):
         # Read input and output csv
         self.y = pd.read_csv(label_file)
@@ -33,9 +42,38 @@ class Destripe_Dataset(Dataset):
         return input, label
 
 class Photon_Dataset(Dataset):
-    def __init__(self,):
-        pass
+    '''
+    PhotonNet dataset
+    :params:
+        self.image_dir: path to input images directory
+        self.label_dir: path to label images directory
+        self.transform: transforms
+    '''
+    def __init__(self, image_dir, label_dir, transform=None):
+        self.image_dir = image_dir
+        self.label_dir = label_dir
+        self.transform = transform
+
+        self.images = os.listdir(image_dir)
+        self.labels = os.listdir(label_dir)
+
     def __len__(self):
-        pass
+        return len(self.images)
     def __getitem__(self, index):
-        pass
+        image_path = os.path.join(self.image_dir, self.images[index])
+        label_path = os.path.join(self.label_dir, self.labels[index])
+
+        image = cv2.imread(image_path)
+        label = cv2.imread(label_path)
+
+        '''
+        INCOMPLETE
+        1) need to apply destripe output, inverse non-linearity, and flatfield to input image
+        2) need to apply J-S to obtain training label
+        '''
+
+        if self.transform is not None:
+            image = self.transform(image)
+            label = self.transform(label)
+
+        return image, label

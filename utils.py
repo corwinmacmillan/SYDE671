@@ -29,6 +29,7 @@ def split_destripe(
     split_size = 0.2
 ):
     '''
+    Splits the .csv file of DestripeNet inputs and labels into a training and validation set
     :params:
         destripe_data_csv: .csv file of destripe inputs and labels from noisy_img.py -> generate_destripe_data()
         destripe_data_path: path to parent folder of destripe train and val folders
@@ -62,31 +63,32 @@ def split_destripe(
     
 
 def destripe_loaders(
-    input_train_files,
-    label_train_files,
-    input_val_files,
-    label_val_files,
+    input_train_file,
+    label_train_file,
+    input_val_file,
+    label_val_file,
     batch_size,
     shuffle=False,
 ):
     '''
+    Generates dataloaders for DestripeNet from .csv files
     :params:
-        input_train_files: model input train files
-        label_train_files: model label train files
-        input_val_files: model input val files
-        label_val_files: model label val files
+        input_train_file: model input train file (.csv)
+        label_train_file: model label train file (.csv)
+        input_val_file: model input val file (.csv)
+        label_val_file: model label val file (.csv)
         batch_size: batch size for dataloader
         shuffle=False: bool to shuffle loader
     '''
     train_ds = Destripe_Dataset(
-        input_file=input_train_files, 
-        label_file=label_train_files,
+        input_file=input_train_file, 
+        label_file=label_train_file,
     )
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
 
     val_ds = Destripe_Dataset(
-        input_file=input_val_files,
-        label_file=label_val_files,
+        input_file=input_val_file,
+        label_file=label_val_file,
     )
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
 
@@ -101,11 +103,12 @@ def photon_loaders(
     shuffle=False,
 ):
     '''
+    Generates dataloaders for PhotonNet from generated noisy images and labels
     :params:
-        input_train_path: model input train path
-        label_train_path: model label train path
-        input_val_path: model input val path
-        label_val_path: model label val path
+        input_train_path: model input train path of noisy images
+        label_train_path: model label train path of label images 
+        input_val_path: model input val path of noisy images
+        label_val_path: model label val pathof label images 
         batch_size: batch size for dataloader
         shuffle=False: bool to shuffle loader
     '''
@@ -124,6 +127,12 @@ def photon_loaders(
     return train_loader, val_loader
 
 def L1_loss(prediction, label):
+    '''
+    L1 loss for model evaluation during training/validation
+    :params:
+        prediction: training/validation prediction
+        label: training/validation label
+    '''
     L1_abs_loss = nn.L1Loss()
     value = L1_abs_loss(prediction, label).item()
     return value

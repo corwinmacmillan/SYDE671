@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 
 class DestripeNet(nn.Module):
+    '''
+    DestripeNet model
+    '''
     def __init__(
         self, 
         in_channels=38, 
@@ -22,7 +25,6 @@ class DestripeNet(nn.Module):
             in_channels = feature
         
         self.Destripe_final = nn.Sequential(
-            #nn.Linear(in_channels=features[-1], out_channels=out_channels),
             nn.Flatten(),
             nn.Linear(in_features=131072, out_features=2532) # crops prediction (based on summed data length)
         )
