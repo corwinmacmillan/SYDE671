@@ -3,7 +3,7 @@ import torch
 
 D_LEARNING_RATE = 1e-4
 D_NUM_EPOCH = 10
-D_BATCH_SIZE = 1e3
+D_BATCH_SIZE = int(1e3)
 
 P_LEARNING_RATE = 1e-4
 P_NUM_EPOCH = 10
