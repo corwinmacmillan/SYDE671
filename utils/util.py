@@ -73,6 +73,7 @@ def destripe_loaders(
     image_path,
     batch_size,
     shuffle=False,
+    num_workers=8,
 ):
     '''
     Generates dataloaders for DestripeNet from .csv files
@@ -90,14 +91,14 @@ def destripe_loaders(
         label_file=label_train_file,
         image_path=image_path,
     )
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
 
     val_ds = Destripe_Dataset(
         input_file=input_val_file,
         label_file=label_val_file,
         image_path=image_path,
     )
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader
 
