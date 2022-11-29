@@ -1,5 +1,6 @@
 import os
 import torch
+import time
 
 from utils.util import(
     L1_loss
@@ -41,6 +42,7 @@ def destripe_train_fn(
     val_L1_values = []
     train_tb_index = 0
     val_tb_index = 0
+    sum_time = 0
 
     for epoch in range(num_epoch):
         print('=' * 30,
@@ -52,6 +54,7 @@ def destripe_train_fn(
         train_L1_epoch = 0
         for (inputs, labels) in train_loader:
             train_step += 1
+            start = time.time()
             
             inputs, labels = (inputs.to(device), labels.to(device))
 
@@ -73,17 +76,23 @@ def destripe_train_fn(
             # Visualize train loss
             writer.add_scalar('Train Loss', train_loss_epoch, train_tb_index)
             
-            print(
-                f'{train_step}/{len(train_loader)}, '
-                f'Train loss: {loss.item():.4f}'
-            )
+            if train_step % 100 == 0:
+                print(
+                    f'{train_step}/{len(train_loader)}, '
+                    f'Train loss: {loss.item():.4f}'
+                )
 
             # L1 loss
             L1_error= L1_loss(outputs, labels)
             train_L1_epoch += L1_error
             # Visualize L1 loss
             writer.add_scalar('L1 Loss', train_L1_epoch, train_tb_index)
-            print('Train L1 loss: {:.4f}'.format(train_L1_epoch))
+            
+            end = time.time()
+            sum_time += end - start
+            if train_step % 100 == 0:
+                print('Train L1 loss: {:.1f}'.format(train_L1_epoch))
+                print('Epoch train time: {:.1f} min remaining'.format((len(train_loader) * sum_time/train_step) / 60))
 
             train_tb_index += 1
 
