@@ -17,14 +17,14 @@ from utils.myisis import MyIsis
 ISISROOT = "/media/panlab/EXTERNALHDD/data/lro/calibration/"
 
 
-def non_linearity(image, mode_and_camera='summed_L'):
+def non_linearity(image, mode_and_camera='summed_L', forward=True):
     '''
     add non-linearity response noise, leaving parameters a, b, c, and d as placeholder
     :param image: numpy array of dimensions (MxN)
     :return: img of same dimensions with non-linear response noise
     '''
     isis = MyIsis(ISISROOT)
-    img = isis.nonlinearity(image, mode_and_camera, forward=True)
+    img = isis.nonlinearity(image, mode_and_camera, forward=forward)
     return img.astype(np.uint16)
 
 
