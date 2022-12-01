@@ -14,11 +14,11 @@ from utils.planetaryimageEDR import PDS3ImageEDR
 
 # DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R'
 # IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_R'
-MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R\model'
-PSR_PATH = r'C:\Users\jh3chu\OneDrive - University of Waterloo\SYDE 671\SYDE671\test_running\PSR'
-PSR_OUTPUT_PATH = PSR_PATH
-CROP_FILE = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\dataset_creation\summed_L_completed_crops.txt'
-CROP_PATH = ''
+MODEL_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/model/best'
+NOISY_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/full_images'
+PSR_OUTPUT_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/destripe_output'
+CROP_FILE = 'dataset_creation/summed_L_completed_crops.txt'
+CROP_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/destripe_crops'
 
 '''
 DESTRIPE_DATA_PATH: source path to destripe testing folders
@@ -31,7 +31,7 @@ CROP_PATH = destination path to save crop
 '''
 
 BATCH_SIZE = 32
-NUM_WORKERS = 8
+NUM_WORKERS = 16
 PATCH_SIZE = 256
 
 class PSR_Destripe(Dataset):
@@ -52,13 +52,13 @@ class PSR_Destripe(Dataset):
         return input # Return an array for each line of the PSR
 
 def eval_destripe():
-    PSR_files = os.listdir(PSR_PATH)
+    PSR_files = os.listdir(NOISY_PATH)
 
     for i in range(len(PSR_files)):
         print('=' * 30)
         print('Evaluating Image {}'.format(i+1))
 
-        I = PDS3ImageEDR.open(os.path.join(PSR_PATH, PSR_files[i]))
+        I = PDS3ImageEDR.open(os.path.join(NOISY_PATH, PSR_files[i]))
         label = I.label
         image = I.image
 
@@ -96,7 +96,7 @@ def eval_destripe():
             map_location='cpu'
         ))
         
-        model.eval
+        model.eval()
         with torch.no_grad():
 
             output_image = np.zeros((52224, 2532)).astype(np.uint16)
@@ -116,21 +116,21 @@ def eval_destripe():
                 count += BATCH_SIZE
 
         print('Saving file...')
-        with open(os.path.join(PSR_PATH, 'Destripe_' + PSR_files[i]), 'wb') as f:
+        with open(os.path.join(PSR_OUTPUT_PATH, 'Destripe_' + PSR_files[i]), 'wb') as f:
             f.write(output_image)
         print('Save Complete')
 
 
 def crop_PSR():
     with open(CROP_FILE, 'r') as f1:
-        df = pd.DataFrame(map(eval,f1.read().splitlines()))
+        df = pd.DataFrame(map(eval, f1.read().splitlines()))
     f1.close()
 
     PSR_destripe_files = os.listdir(PSR_OUTPUT_PATH)
 
     for i in range(len(PSR_destripe_files)):
         with open(os.path.join(PSR_OUTPUT_PATH, PSR_destripe_files[i]), 'rb') as f2:
-            dark_nosie = np.fromfile(f2, dtype=np.uint16)
+            dark_noise = np.fromfile(f2, dtype=np.uint16).reshape(52224, 2532)
 
         filename = PSR_destripe_files[i].split('_')[1]
 
@@ -138,17 +138,17 @@ def crop_PSR():
             if df.iloc[j, 0] == filename:
                 crop_row = df.iloc[j, 1]
                 crop_col = df.iloc[j, 2]
-                crop = dark_nosie[
+                crop = dark_noise[
                     crop_row : (crop_row + PATCH_SIZE),
                     crop_col : (crop_col + PATCH_SIZE)
                 ]
 
-                with open(os.path.join(CROP_PATH, crop_row + '_' + crop_col + '_' + filename), 'wb') as f:
-                    f.write(crop)
+                with open(os.path.join(CROP_PATH, '{}_{}_{}'.format(crop_row, crop_col, filename)), 'wb') as f:
+                    f.write(bytes(crop))
         
 def main():
-    eval_destripe()
-    #crop_PSR()
+    # eval_destripe()
+    crop_PSR()
 
 if __name__ == '__main__':
     main()

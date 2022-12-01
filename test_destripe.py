@@ -7,8 +7,8 @@ from models.destripe import DestripeNet
 
 from torch.utils.data import (DataLoader, Dataset)
 
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter(log_dir='dataset_creation/tensorboard')
+# from torch.utils.tensorboard import SummaryWriter
+# writer = SummaryWriter(log_dir='dataset_creation/tensorboard')
 
 
 from dataset_creation.dataset import Destripe_Dataset
@@ -22,9 +22,9 @@ from utils.planetaryimageEDR import PDS3ImageEDR
 TEST_DESTRIPE = True
 
 
-DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R'
-IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_R'
-MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R\model'
+DESTRIPE_DATA_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/'
+IMAGE_PATH = '/media/panlab/EXTERNALHDD/dark_summed/NAC_L/images'
+MODEL_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/model/best'
 PSR_PATH = ''
 '''
 DESTRIPE_DATA_PATH: path to destripe testing folders
@@ -41,8 +41,8 @@ def test_destripe():
     destripe_path_test = os.path.join(DESTRIPE_DATA_PATH, 'test')
 
     test_ds = Destripe_Dataset(
-        input_file=os.path.join(destripe_path_test, 'test_inputs.csv'),
-        label_file=os.path.join(destripe_path_test, 'test_labels.csv'),
+        input_file=os.path.join(destripe_path_test, 'test_inputs_reduced.csv'),
+        label_file=os.path.join(destripe_path_test, 'test_labels_reduced.csv'),
         image_path=IMAGE_PATH
     )
 
@@ -57,10 +57,10 @@ def test_destripe():
         map_location='cpu'
     ))
     
-    test_L1_values = []
-    model.eval
+    # test_L1_values = []
+    model.eval()
     with torch.no_grad():
-        test_L1 = 0
+        # test_L1 = 0
         test_L1_run = 0
 
         for step, (test_inputs, test_labels) in enumerate(test_loader):
@@ -70,10 +70,9 @@ def test_destripe():
             test_outputs = model(test_inputs)
 
             # L1 loss
-            test_L1 = L1_loss(test_outputs, test_labels)
-            test_L1_run += test_L1
-            writer.add_scalar('Test L1 Loss', test_L1_run/(step+1), (step+1))
-            test_L1_values.append(test_L1_run/(step+1))
+            test_L1_run += L1_loss(test_outputs, test_labels)
+            # writer.add_scalar('Test L1 Loss', test_L1_run/(step+1), (step+1))
+            # test_L1_values.append(test_L1_run/(step+1))
             if (step+1) % 100 == 0:
                 print('Step: {}/{} \tTest L1 Loss: {}'.format(
                     (step+1),
@@ -81,8 +80,9 @@ def test_destripe():
                     test_L1_run / (step+1))
                 )
     
-    df = pd.DataFrame(test_L1_values)
-    df.to_csv('dataset_creation/tensorboard/test_L1_values.csv', header=False, index=False)
+    return test_L1_run / len(test_loader)
+    # df = pd.DataFrame(test_L1_values)
+    # df.to_csv('dataset_creation/tensorboard/test_L1_values.csv', header=False, index=False)
             
 
 class PSR_Destripe(Dataset):
@@ -169,7 +169,8 @@ def PSR_destripe():
           
 def main():
     if TEST_DESTRIPE:
-        test_destripe()
+        L1 = test_destripe()
+        print(L1)
 
     
 
