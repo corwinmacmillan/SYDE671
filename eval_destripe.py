@@ -93,7 +93,7 @@ def eval_destripe():
         model.eval
         with torch.no_grad():
 
-            output_image = np.zeros((52224, 2532))
+            output_image = np.zeros((52224, 2532)).astype(np.uint16)
             count = 0
             for step, line in enumerate(PSR_loader):
                 
@@ -102,9 +102,9 @@ def eval_destripe():
                 line_out = model(line)
 
                 for j in range(BATCH_SIZE):
-                    output_image[count+j, :] = line_out.cpu().detach().numpy()[j]
+                    output_image[count+j, :] = line_out.cpu().detach().numpy()[j].astype(np.uint16)
                 
-                if step % 200 == 0:
+                if step+1 % 200 == 0:
                     print('Step: {}/{}'.format((step+1), len(PSR_loader)))
                 
                 count += BATCH_SIZE
