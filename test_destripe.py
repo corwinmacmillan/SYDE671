@@ -42,7 +42,8 @@ def test_destripe():
 
     test_ds = Destripe_Dataset(
         input_file=os.path.join(destripe_path_test, 'test_inputs.csv'),
-        label_file=os.path.join(destripe_path_test, 'test_labels.csv')
+        label_file=os.path.join(destripe_path_test, 'test_labels.csv'),
+        image_path=IMAGE_PATH
     )
 
     test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=NUM_WORKERS)
