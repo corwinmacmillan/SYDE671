@@ -23,15 +23,18 @@ TEST_DESTRIPE = True
 
 
 DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R'
+IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_R'
 MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R\model'
 PSR_PATH = ''
 '''
 DESTRIPE_DATA_PATH: path to destripe testing folders
                     (or folder where split_destripe() will generate training/validation/testing folders)
 MODEL_PATH: path to where best model is saved
+MODEL_PATH: path to where best model is saved# 
 '''
 
-BATCH_SIZE = 1
+BATCH_SIZE = 32
+NUM_WORKERS = 8
 
 
 def test_destripe():
@@ -39,10 +42,10 @@ def test_destripe():
 
     test_ds = Destripe_Dataset(
         input_file=os.path.join(destripe_path_test, 'test_inputs.csv'),
-        label_file=os.path.join(destripe_path_test, 'test_outputs.csv')
+        label_file=os.path.join(destripe_path_test, 'test_labels.csv')
     )
 
-    test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False)
+    test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=NUM_WORKERS)
 
     model = DestripeNet(
         in_channels=38,
@@ -68,9 +71,14 @@ def test_destripe():
             # L1 loss
             test_L1 = L1_loss(test_outputs, test_labels)
             test_L1_run += test_L1
-            writer.add_scalar('Test L1 Loss', test_L1_run/step, step)
-            test_L1_values.append(test_L1_run/step)
-            print('Step: {} \tTest L1 Loss: {}'.format((step / len(test_loader)), test_L1_run/step))
+            writer.add_scalar('Test L1 Loss', test_L1_run/(step+1), (step+1))
+            test_L1_values.append(test_L1_run/(step+1))
+            if (step+1) % 100 == 0:
+                print('Step: {}/{} \tTest L1 Loss: {}'.format(
+                    (step+1),
+                    len(test_loader), 
+                    test_L1_run / (step+1))
+                )
     
     df = pd.DataFrame(test_L1_values)
     df.to_csv('dataset_creation/tensorboard/test_L1_values.csv', header=False, index=False)
