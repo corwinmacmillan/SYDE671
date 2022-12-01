@@ -8,14 +8,6 @@ from models.destripe import DestripeNet
 
 from torch.utils.data import (DataLoader, Dataset)
 
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter(log_dir='dataset_creation/tensorboard')
-
-
-from dataset_creation.dataset import Destripe_Dataset
-
-from utils.util import(L1_loss)
-
 import models.hyperparameters as hp
 
 from utils.planetaryimageEDR import PDS3ImageEDR
@@ -23,13 +15,14 @@ from utils.planetaryimageEDR import PDS3ImageEDR
 # DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R'
 # IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_R'
 MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R\model'
-PSR_PATH = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\test_running\PSR'
-PSR_OUTPUT_PATH = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\test_running\PSR'
+PSR_PATH = r'C:\Users\jh3chu\OneDrive - University of Waterloo\SYDE 671\SYDE671\test_running\PSR'
+PSR_OUTPUT_PATH = PSR_PATH
 '''
 DESTRIPE_DATA_PATH: path to destripe testing folders
                     (or folder where split_destripe() will generate training/validation/testing folders)
 MODEL_PATH: path to where best model is saved
-MODEL_PATH: path to where best model is saved# 
+PSR_PATH: path to PSR images
+PSR_OUTPUT_PATH: path to outputs of destripe PSR images
 '''
 
 BATCH_SIZE = 32
@@ -48,7 +41,7 @@ class PSR_Destripe(Dataset):
         return len(self.image_data)
 
     def __getitem__(self, index):
-        input = self.image_data[index]
+        input = self.image_data[index].reshape(38, 1)
 
         return input # Return an array for each line of the PSR
 
@@ -71,7 +64,6 @@ def eval_destripe():
             masked_pix2 = line[-19:]
 
             PSR_parameters = np.array([
-                PSR_files[i],
                 label['ORBIT_NUMBER'],
                 label['LRO:TEMPERATURE_FPGA'][0],
                 label['LRO:TEMPERATURE_FPA'][0],
@@ -104,18 +96,20 @@ def eval_destripe():
             output_image = np.zeros((52224, 2532))
             for step, line in enumerate(PSR_loader):
                 
-                line = (line.to(hp.DEVICE))
+                line = (line.float().to(hp.DEVICE))
 
-                test_inputs, test_labels = (test_inputs.to(hp.DEVICE), test_labels.to(hp.DEVICE))
+                line_out = model(line)
 
-                line_out = model(test_inputs)
+                for j in range(BATCH_SIZE):
+                    output_image[step+j, :] = line_out.cpu().detach().numpy()[j]
+                    print('Step: {}/{}'.format((step+1), len(PSR_loader)))
 
-                output_image[step, :] = line_out
 
 
-
-        with open(os.path.join(PSR_PATH, PSR_files[i] + '_Destripe'), 'wb') as f:
+        print('Saving file...')
+        with open(os.path.join(PSR_PATH, 'Destripe_' + PSR_files[i]), 'wb') as f:
             f.write(output_image)
+        print('Save Complete')
         
 def main():
     eval_destripe()
