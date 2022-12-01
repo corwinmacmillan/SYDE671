@@ -217,7 +217,7 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
     # get clean_files
     clean_files = os.listdir(clean_img_dir)
 
-    # @parfor(range(crop_list.shape[0]), (crop_list,))
+    @parfor(range(crop_list.shape[0]), (crop_list,))
     def noisy_img_pairs(i, c_list):
 
         image_index = c_list[i, 0]
@@ -228,9 +228,9 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
         img_file = clean_files[image_index]
         image = PDS3ImageEDR.open(os.path.join(clean_img_dir, img_file)).image
         # get crops
-        # for crop_h, crop_l in zip(crops_h, crops_l):
-        @parfor(len(range(crops_l)), (crops_h, ), (crops_l, ))
-        def add_noise(i, crop_h, crop_l):
+        for crop_h, crop_l in zip(crops_h, crops_l):
+        # @parfor(range(len(crops_l)), (crops_h, ), (crops_l, ))
+        # def add_noise(i, crop_h, crop_l):
             clean_crop = image[crop_h:crop_h + crop_size, crop_l:crop_l + crop_size]
             if np.median(clean_crop) > 200:
                 clean_crop = rescale_DN(clean_crop)
@@ -255,18 +255,21 @@ def generate_noisy_img_pairs(clean_img_dir, destination_dir, crop_list, calibrat
         # hours_left = round((sum_time / (i + 1) * len(dark_files) - i * sum_time / (i + 1)) / 3600, 2)
         # print('Image {}, {} / {}, estimated hours left: {}'.format(dark_files[i], i, len(dark_files), hours_left))
 
-    for i in range(len(crop_list)):
-        noisy_img_pairs(i, crop_list)
+    # for i in range(len(crop_list)):
+    #     noisy_img_pairs(i, crop_list)
 
 
 if __name__ == '__main__':
-    source_dir = '/media/panlab/EXTERNALHDD/bright_summed/'
-    # generate_crop_list(source_dir, 1e5, destination_npy_file='crop_list_R.npy')
-    destination_dir = '/media/panlab/CHARVIHDD/SYDE671/'
-    calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/'
-    for sub_dir in os.listdir(source_dir):
-        crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
-        generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
-                                 crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
+    source_dir = '/media/panlab/EXTERNALHDD/bright_summed/NAC_L/'
+    # generate_crop_list(source_dir, 100, destination_npy_file='test_crop_list_L.npy')
+    destination_dir = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test'
+    calib_dir = '/media/panlab/EXTERNALHDD/dark_summed/NAC_L/'
+    crop_list_path = np.load('test_crop_list_L.npy', allow_pickle=True)
+    generate_noisy_img_pairs(source_dir, destination_dir, crop_list_path, calib_dir, 'summed_L')
+
+    # for sub_dir in os.listdir(source_dir):
+    #     crop_list = np.load('crop_list_' + sub_dir[-1] + '.npy', allow_pickle=True)
+    #     generate_noisy_img_pairs(source_dir + sub_dir, destination_dir + sub_dir,
+    #                              crop_list, calib_dir + '/' + sub_dir + '/', 'summed_' + sub_dir[-1])
     # dark_calibration = '/media/panlab/EXTERNALHDD/dark_summed/'
     # generate_destripe_data(dark_calibration, destination_dir)

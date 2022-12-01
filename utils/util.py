@@ -73,7 +73,7 @@ def destripe_loaders(
     image_path,
     batch_size,
     shuffle=False,
-    num_workers=8,
+    num_workers=16,
 ):
     '''
     Generates dataloaders for DestripeNet from .csv files

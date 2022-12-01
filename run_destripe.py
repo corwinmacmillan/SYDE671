@@ -21,7 +21,7 @@ from models.tensorboard_utils import (
 from models.destripe import DestripeNet
 
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter('dataset_creation/tensorboard')
+writer = SummaryWriter('dataset_creation/tensorboardnew')
 
 # Conditional functions in main()
 SPLIT_DESTRIPE = False
@@ -32,9 +32,9 @@ SPLIT_DESTRIPE: split the data .csv file generated in noisy_img.py ->
 
 # Paths
 DESTRIPE_DATA_CSV = ''
-DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_L'
-MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_L\model'
-IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_L'
+DESTRIPE_DATA_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L'
+MODEL_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/model/'
+IMAGE_PATH = '/media/panlab/EXTERNALHDD/dark_summed/NAC_L/images'
 '''
 DESTRIPE_DATA_CSV: path to data .csv file generated in noisy_img.py -> generate_destripe_data()
 DESTRIPE_DATA_PATH: path to destripe training and validation folders 
@@ -70,13 +70,6 @@ def main():
     loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=hp.D_LEARNING_RATE)
 
-    # if os.listdir(MODEL_PATH) is not None:
-    #     checkpoint_file = os.listdir(MODEL_PATH)
-    #     checkpoint = torch.load(checkpoint_file)
-    #     model.load_state_dict(checkpoint['model_state_dict'])
-    #     optimizer.load_state_dict(checkpoint['optim_state_dict'])
-    #     # epoch = checkpoint['epoch']
-    #     # loss = checkpoint['train_loss']
 
     destripe_train_fn(
         train_loader,
@@ -88,6 +81,7 @@ def main():
         hp.DEVICE,
         MODEL_PATH,
         writer,
+        checkpoint=MODEL_PATH
     )
     
 if __name__ == '__main__':
