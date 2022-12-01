@@ -17,16 +17,22 @@ from utils.planetaryimageEDR import PDS3ImageEDR
 MODEL_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R\model'
 PSR_PATH = r'C:\Users\jh3chu\OneDrive - University of Waterloo\SYDE 671\SYDE671\test_running\PSR'
 PSR_OUTPUT_PATH = PSR_PATH
+CROP_FILE = r'C:\Users\jon25\OneDrive - University of Waterloo\SYDE 671\SYDE671\dataset_creation\summed_L_completed_crops.txt'
+CROP_PATH = ''
+
 '''
-DESTRIPE_DATA_PATH: path to destripe testing folders
+DESTRIPE_DATA_PATH: source path to destripe testing folders
                     (or folder where split_destripe() will generate training/validation/testing folders)
-MODEL_PATH: path to where best model is saved
-PSR_PATH: path to PSR images
-PSR_OUTPUT_PATH: path to outputs of destripe PSR images
+MODEL_PATH: source path to where best model is saved
+PSR_PATH: source path to PSR images
+PSR_OUTPUT_PATH: destination path to outputs of destripe PSR images
+CROP_FILE = .txt tiles with filtered crop file coordinates
+CROP_PATH = destination path to save crop
 '''
 
 BATCH_SIZE = 32
 NUM_WORKERS = 8
+PATCH_SIZE = 256
 
 class PSR_Destripe(Dataset):
     '''
@@ -113,9 +119,36 @@ def eval_destripe():
         with open(os.path.join(PSR_PATH, 'Destripe_' + PSR_files[i]), 'wb') as f:
             f.write(output_image)
         print('Save Complete')
+
+
+def crop_PSR():
+    with open(CROP_FILE, 'r') as f1:
+        df = pd.DataFrame(map(eval,f1.read().splitlines()))
+    f1.close()
+
+    PSR_destripe_files = os.listdir(PSR_OUTPUT_PATH)
+
+    for i in range(len(PSR_destripe_files)):
+        with open(os.path.join(PSR_OUTPUT_PATH, PSR_destripe_files[i]), 'rb') as f2:
+            dark_nosie = np.fromfile(f2, dtype=np.uint16)
+
+        filename = PSR_destripe_files[i].split('_')[1]
+
+        for j in range(len(df)):
+            if df.iloc[j, 0] == filename:
+                crop_row = df.iloc[j, 1]
+                crop_col = df.iloc[j, 2]
+                crop = dark_nosie[
+                    crop_row : (crop_row + PATCH_SIZE),
+                    crop_col : (crop_col + PATCH_SIZE)
+                ]
+
+                with open(os.path.join(CROP_PATH, crop_row + '_' + crop_col + '_' + filename), 'wb') as f:
+                    f.write(crop)
         
 def main():
     eval_destripe()
+    #crop_PSR()
 
 if __name__ == '__main__':
     main()
