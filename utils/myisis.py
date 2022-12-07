@@ -98,7 +98,7 @@ class MyIsis:
         
         return k
     
-    def flatfield(self, im, k='summed_L', line_slice_start=0, line_slice_end=-1, forward=False):
+    def flatfield(self, im, k='summed_L', line_slice_start=None, line_slice_end=None, forward=False):
         "run my own flatfield correction on an image array im"
         
         # k = self._validate(image, im, df)
