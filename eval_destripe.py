@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import re
+from parfor import parfor
 
 from models.destripe import DestripeNet
 
@@ -15,7 +16,7 @@ from utils.planetaryimageEDR import PDS3ImageEDR
 # DESTRIPE_DATA_PATH = r'D:\Jonathan\3_Courses\DestripeNet\NAC_R'
 # IMAGE_PATH = r'D:\Jonathan\3_Courses\dark_summed\NAC_R'
 MODEL_PATH = '/media/panlab/EXTERNALHDD/DestripeNet/NAC_L/model/best'
-NOISY_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/full_images'
+NOISY_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/noisy'
 PSR_OUTPUT_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/destripe_output'
 CROP_FILE = 'dataset_creation/summed_L_completed_crops.txt'
 CROP_PATH = '/media/panlab/CHARVIHDD/PhotonNet/NAC_L/test/destripe_crops'
@@ -51,19 +52,24 @@ class PSR_Destripe(Dataset):
 
         return input # Return an array for each line of the PSR
 
+
 def eval_destripe():
     PSR_files = os.listdir(NOISY_PATH)
 
     for i in range(len(PSR_files)):
+    # @parfor(range(len(PSR_files)))
+    # def generate(i):
         print('=' * 30)
         print('Evaluating Image {}'.format(i+1))
 
         I = PDS3ImageEDR.open(os.path.join(NOISY_PATH, PSR_files[i]))
         label = I.label
         image = I.image
+        # with open(os.path.join(NOISY_PATH, PSR_files[i]), 'rb') as f:
+        #     image = np.fromfile(f, dtype=np.uint16).reshape(52224, 2532)
 
         PSR_data = [] # Input data for destripe
-        for j in range(I.image.shape[0]): # for each line in the image
+        for j in range(image.shape[0]): # for each line in the image
             line = image[j, :]
   
             masked_pix1 = line[:11]
@@ -117,7 +123,7 @@ def eval_destripe():
 
         print('Saving file...')
         with open(os.path.join(PSR_OUTPUT_PATH, 'Destripe_' + PSR_files[i]), 'wb') as f:
-            f.write(output_image)
+            f.write(bytes(output_image))
         print('Save Complete')
 
 
@@ -145,10 +151,13 @@ def crop_PSR():
 
                 with open(os.path.join(CROP_PATH, '{}_{}_{}'.format(crop_row, crop_col, filename)), 'wb') as f:
                     f.write(bytes(crop))
-        
+
+
 def main():
-    # eval_destripe()
-    crop_PSR()
+    eval_destripe()
+    # crop_PSR()
+
 
 if __name__ == '__main__':
     main()
+
