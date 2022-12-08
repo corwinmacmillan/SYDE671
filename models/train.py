@@ -2,23 +2,23 @@ import os
 import torch
 import time
 
-from utils.util import(
+from utils.util import (
     L1_loss
 )
 
 
 def destripe_train_fn(
-    train_loader, 
-    val_loader, 
-    model, 
-    optimizer, 
-    loss_fn, 
-    num_epoch, 
-    device,
-    model_path,
-    writer,
-    val_interval=1,
-    checkpoint=None
+        train_loader,
+        val_loader,
+        model,
+        optimizer,
+        loss_fn,
+        num_epoch,
+        device,
+        model_path,
+        writer,
+        val_interval=1,
+        checkpoint=None
 ):
     '''
     Training function for DestripeNet
@@ -51,25 +51,23 @@ def destripe_train_fn(
 
         checkpoint_file = os.listdir(checkpoint_path)[0]
         checkpoint = torch.load(os.path.join(checkpoint_path, checkpoint_file), map_location='cpu')
-        checkpoint_state_dict = checkpoint['model_state_dict']
-        optim_state_dict = checkpoint['optim_state_dict']
-        model.load_state_dict(checkpoint_state_dict())
-        optimizer.load_state_dict(optim_state_dict())
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optim_state_dict'])
         continuation_epoch = checkpoint['epoch']
         # continuation_loss = checkpoint['train_loss']
 
     for epoch in range(num_epoch):
         sum_time = 0
         print('=' * 30,
-            '\nEpoch {}/{}'.format(continuation_epoch + epoch+1, continuation_epoch + num_epoch)
-        )
+              '\nEpoch {}/{}'.format(continuation_epoch + epoch + 1, continuation_epoch + num_epoch)
+              )
 
         train_loss_epoch = 0
         train_L1_epoch = 0
         for index, (inputs, labels) in enumerate(train_loader):
             train_step = index + 1
             start = time.time()
-            
+
             inputs, labels = (inputs.to(device), labels.to(device))
 
             # Zero optimizer
@@ -77,7 +75,7 @@ def destripe_train_fn(
 
             # Forward
             outputs = model(inputs)
-            #output = output[:2532] #crop output to same size as summed label 
+            # output = output[:2532] #crop output to same size as summed label
             loss = loss_fn(outputs, labels)
 
             # Backwards
@@ -88,8 +86,9 @@ def destripe_train_fn(
 
             train_loss_epoch += loss.item()
             # Visualize train loss
-            writer.add_scalar('Train Loss', train_loss_epoch/(train_step), train_tb_index)
-            
+            writer.add_scalar('Train Loss', train_loss_epoch / train_step,
+                              (continuation_epoch + epoch + 1) * len(train_loader) + index)
+
             if (train_step) % 100 == 0:
                 print(
                     f'{train_step}/{len(train_loader)}, '
@@ -97,16 +96,19 @@ def destripe_train_fn(
                 )
 
             # L1 loss
-            L1_error= L1_loss(outputs, labels)
+            L1_error = L1_loss(outputs, labels)
             train_L1_epoch += L1_error
             # Visualize L1 loss
-            writer.add_scalar('L1 Loss', train_L1_epoch/(train_step), train_tb_index)
-            
+            writer.add_scalar('L1 Loss', train_L1_epoch / train_step,
+                              (continuation_epoch + epoch + 1) * len(train_loader) + index)
+
             end = time.time()
             sum_time += end - start
             if (train_step) % 100 == 0:
                 print('Train L1 loss: {:.1f}'.format(train_L1_epoch))
-                print('Epoch train time: {:.1f} min remaining'.format((len(train_loader) * sum_time/(train_step)) / 60))
+                print('Epoch train time: {:.1f}/{.1f} min elapsed'.format(sum_time / 60,
+                                                                          (
+                                                                                  len(train_loader) * sum_time / train_step) / 60))
 
             train_tb_index += 1
 
@@ -124,12 +126,14 @@ def destripe_train_fn(
         # Validation
         if (epoch + 1) % val_interval == 0:
             model.eval()
+            eval_sum_time = 0
             with torch.no_grad():
                 val_loss_epoch = 0
                 val_L1_epoch = 0
                 val_L1 = 0
 
                 for val_index, (val_inputs, val_labels) in enumerate(val_loader):
+                    eval_start = time.time()
                     val_step = val_index + 1
 
                     val_inputs, val_labels = (val_inputs.to(device), val_labels.to(device))
@@ -143,6 +147,14 @@ def destripe_train_fn(
                     # L1 loss
                     val_L1 = L1_loss(val_outputs, val_labels)
                     val_L1_epoch += val_L1
+                    eval_end = time.time()
+                    eval_sum_time += eval_end - eval_start
+                    if val_index % 100 == 0:
+                        print('Val batch {}/{}, eval time: {.1f}/{.1f} min elapsed'.format(
+                            val_index, len(val_loader),
+                            sum_time / 60,
+                            (len(val_loader) * sum_time / (val_index + 1)) / 60))
+
                     # writer.add_scalar('Validation L1 Loss', val_L1_epoch/val_step, val_tb_index)
 
                 print('-' * 30)
@@ -155,9 +167,9 @@ def destripe_train_fn(
                 # val_L1_values.append(val_L1_epoch)
 
                 writer.add_scalars('Loss', {'Validation_loss': val_loss_epoch,
-                                            'Training_loss': train_loss_epoch}, epoch + 1)
-                writer.add_scalars('mIoU', {'Validation_mIoU': val_L1_values,
-                                            'Training_mIoU': train_L1_values}, epoch + 1)
+                                            'Training_loss': train_loss_epoch}, continuation_epoch + epoch + 1)
+                writer.add_scalars('L1', {'Validation_L1': val_L1_epoch,
+                                          'Training_L1': train_L1_epoch}, continuation_epoch + epoch + 1)
 
                 torch.save({'epoch': epoch,
                             'model_state_dict': model.state_dict(),
@@ -177,23 +189,27 @@ def destripe_train_fn(
 
                 print('-' * 30)
                 print(
-                    'Current epoch: {} \t Current L1 loss: {:.4f} \nBest L1 loss: {:.4f} at epoch {}'.format(epoch+1, val_L1, best_L1, best_L1_epoch)
+                    'Current epoch: {} \t Current L1 loss: {:.4f} \nBest L1 loss: {:.4f} at epoch {}'.format(epoch + 1,
+                                                                                                             val_L1,
+                                                                                                             best_L1,
+                                                                                                             best_L1_epoch)
                 )
 
     print('---Training Completed--- \nBest L1 loss: {:.4f} at epoch {}'.format(best_L1, best_L1_epoch))
     writer.close()
 
+
 def photon_train_fn(
-    train_loader, 
-    val_loader, 
-    model, 
-    optimizer, 
-    loss_fn, 
-    num_epoch, 
-    device,
-    model_path,
-    writer,
-    val_interval=2,
+        train_loader,
+        val_loader,
+        model,
+        optimizer,
+        loss_fn,
+        num_epoch,
+        device,
+        model_path,
+        writer,
+        val_interval=2,
 ):
     '''
     Training function for PhotonNet
@@ -221,15 +237,15 @@ def photon_train_fn(
 
     for epoch in range(num_epoch):
         print('=' * 30,
-            '\nEpoch {}/{}'.format(epoch+1, num_epoch)
-        )
+              '\nEpoch {}/{}'.format(epoch + 1, num_epoch)
+              )
 
         train_step = 0
         train_loss_epoch = 0
         train_L1_epoch = 0
         for (inputs, labels) in train_loader:
             train_step += 1
-            
+
             inputs, labels = (inputs.to(device), labels.to(device))
 
             # Zero optimizer
@@ -237,7 +253,7 @@ def photon_train_fn(
 
             # Forward
             outputs = model(inputs)
-            #output = output[:2532] #crop output to same size as summed label 
+            # output = output[:2532] #crop output to same size as summed label
             loss = loss_fn(outputs, labels)
 
             # Backwards
@@ -249,14 +265,14 @@ def photon_train_fn(
             train_loss_epoch += loss.item()
             # Visualize train loss
             writer.add_scalar('Train Loss', train_loss_epoch, train_tb_index)
-            
+
             print(
                 f'{train_step}/{len(train_loader)}, '
                 f'Train loss: {loss.item():.4f}'
             )
 
             # L1 loss
-            L1_error= L1_loss(outputs, labels)
+            L1_error = L1_loss(outputs, labels)
             train_L1_epoch += L1_error
             # Visualize L1 loss
             writer.add_scalar('L1 Loss', train_L1_epoch, train_tb_index)
@@ -319,7 +335,10 @@ def photon_train_fn(
 
                 print('-' * 30)
                 print(
-                    'Current epoch: {} \t Current L1 loss: {:.4f} \nBest L1 loss: {:.4f} at epoch {}'.format(epoch+1, val_L1, best_L1, best_L1_epoch)
+                    'Current epoch: {} \t Current L1 loss: {:.4f} \nBest L1 loss: {:.4f} at epoch {}'.format(epoch + 1,
+                                                                                                             val_L1,
+                                                                                                             best_L1,
+                                                                                                             best_L1_epoch)
                 )
 
     print('---Training Completed--- \nBest L1 loss: {:.4f} at epoch {}'.format(best_L1, best_L1_epoch))
