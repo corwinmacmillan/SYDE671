@@ -106,7 +106,7 @@ def destripe_train_fn(
             sum_time += end - start
             if (train_step) % 100 == 0:
                 print('Train L1 loss: {:.1f}'.format(train_L1_epoch))
-                print('Epoch train time: {:.1f}/{.1f} min elapsed'.format(sum_time / 60,
+                print('Epoch train time: {:.1f}/{:.1f} min elapsed'.format(sum_time / 60,
                                                                           (
                                                                                   len(train_loader) * sum_time / train_step) / 60))
 
@@ -150,7 +150,7 @@ def destripe_train_fn(
                     eval_end = time.time()
                     eval_sum_time += eval_end - eval_start
                     if val_index % 100 == 0:
-                        print('Val batch {}/{}, eval time: {.1f}/{.1f} min elapsed'.format(
+                        print('Val batch {}/{}, eval time: {:.1f}/{:.1f} min elapsed'.format(
                             val_index, len(val_loader),
                             sum_time / 60,
                             (len(val_loader) * sum_time / (val_index + 1)) / 60))
